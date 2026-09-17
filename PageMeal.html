@@ -1,0 +1,838 @@
+<!-- PageMeal.html — 食事・栄養記録 STEP2（かんたん入力 / 詳細入力） -->
+
+<!-- タブ（記録/履歴） -->
+<div id="meal-tabs" class="body-tabs" style="margin-bottom:12px">
+  <button class="body-tab active" onclick="showMealTab('record', this)">記録する</button>
+  <button class="body-tab" onclick="showMealTab('history', this)">履歴</button>
+</div>
+
+<!-- ===== 記録タブ ===== -->
+<div id="meal-pane-record" class="tr-pane active">
+
+  <div class="save-result" id="meal-result"></div>
+
+  <!-- 日付 -->
+  <div class="form-section">
+    <div class="form-section-title">📅 日付</div>
+    <input type="date" id="meal-date" class="form-input" style="width:100%;font-size:18px;">
+  </div>
+
+  <!-- 入力方式切替 -->
+  <div class="body-tabs meal-mode-tabs">
+    <button class="body-tab" id="meal-mode-btn-easy"   onclick="mealSwitchMode('easy')">⚡ かんたん入力</button>
+    <button class="body-tab" id="meal-mode-btn-detail" onclick="mealSwitchMode('detail')">📊 詳細入力</button>
+  </div>
+
+  <!-- ===== かんたん入力 ===== -->
+  <div id="meal-easy-form">
+
+    <div class="form-section">
+      <div class="form-section-title">🍽️ 1日の食事量</div>
+      <div class="choice-group" id="meal-ea-amount">
+        <button class="choice-btn" onclick="mealEasyPick('amount','少ない',this)">少ない</button>
+        <button class="choice-btn" onclick="mealEasyPick('amount','普通',this)">普通</button>
+        <button class="choice-btn" onclick="mealEasyPick('amount','多い',this)">多い</button>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🥩 タンパク質</div>
+      <div class="choice-group" id="meal-ea-protein">
+        <button class="choice-btn" onclick="mealEasyPick('protein','少ない',this)">少ない</button>
+        <button class="choice-btn" onclick="mealEasyPick('protein','普通',this)">普通</button>
+        <button class="choice-btn" onclick="mealEasyPick('protein','多い',this)">多い</button>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🌾 炭水化物</div>
+      <div class="choice-group" id="meal-ea-carbs">
+        <button class="choice-btn" onclick="mealEasyPick('carbs','少ない',this)">少ない</button>
+        <button class="choice-btn" onclick="mealEasyPick('carbs','普通',this)">普通</button>
+        <button class="choice-btn" onclick="mealEasyPick('carbs','多い',this)">多い</button>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🧈 脂質</div>
+      <div class="choice-group" id="meal-ea-fat">
+        <button class="choice-btn" onclick="mealEasyPick('fat','少ない',this)">少ない</button>
+        <button class="choice-btn" onclick="mealEasyPick('fat','普通',this)">普通</button>
+        <button class="choice-btn" onclick="mealEasyPick('fat','多い',this)">多い</button>
+      </div>
+    </div>
+
+    <!-- トレ前セクション（任意） -->
+    <div class="form-section">
+      <div class="form-section-title">🏋️ トレ前の食事 <span class="meal-optional">（任意）</span></div>
+      <div class="choice-group" id="meal-ea-premeal">
+        <button class="choice-btn" onclick="mealEasyToggle('preWorkoutMeal','なし',this)">なし</button>
+        <button class="choice-btn" onclick="mealEasyToggle('preWorkoutMeal','軽め',this)">軽め</button>
+        <button class="choice-btn" onclick="mealEasyToggle('preWorkoutMeal','普通',this)">普通</button>
+        <button class="choice-btn" onclick="mealEasyToggle('preWorkoutMeal','しっかり',this)">しっかり</button>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">⏱️ トレ前のタイミング <span class="meal-optional">（任意）</span></div>
+      <div class="choice-group meal-wrap-group" id="meal-ea-timing">
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutTiming','1時間未満',this)">1時間未満</button>
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutTiming','1〜2時間前',this)">1〜2時間前</button>
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutTiming','2〜3時間前',this)">2〜3時間前</button>
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutTiming','3時間以上前',this)">3時間以上前</button>
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutTiming','不明',this)">不明</button>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🌾 トレ前の炭水化物 <span class="meal-optional">（任意）</span></div>
+      <div class="choice-group meal-wrap-group" id="meal-ea-precarbs">
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutCarbs','なし',this)">なし</button>
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutCarbs','少なめ',this)">少なめ</button>
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutCarbs','普通',this)">普通</button>
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutCarbs','多め',this)">多め</button>
+        <button class="choice-btn meal-wide-btn" onclick="mealEasyToggle('preWorkoutCarbs','不明',this)">不明</button>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">📝 メモ <span class="meal-optional">（任意）</span></div>
+      <textarea id="meal-easy-memo" class="form-textarea"
+                placeholder="気づきや特記事項など" style="min-height:72px"></textarea>
+    </div>
+
+  </div><!-- /#meal-easy-form -->
+
+  <!-- ===== 詳細入力 ===== -->
+  <div id="meal-detail-form" style="display:none">
+
+    <div class="form-section">
+      <div class="form-section-title">🔥 エネルギー・主要栄養素</div>
+      <div class="form-row">
+        <label class="form-label">カロリー</label>
+        <input type="number" id="meal-det-calories" class="form-input"
+               placeholder="2000" step="10" min="0">
+        <span class="form-unit">kcal</span>
+      </div>
+      <div class="form-row">
+        <label class="form-label">タンパク質</label>
+        <input type="number" id="meal-det-protein" class="form-input"
+               placeholder="150" step="1" min="0">
+        <span class="form-unit">g</span>
+      </div>
+      <div class="form-row">
+        <label class="form-label">脂質</label>
+        <input type="number" id="meal-det-fat" class="form-input"
+               placeholder="60" step="1" min="0">
+        <span class="form-unit">g</span>
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">炭水化物</label>
+        <input type="number" id="meal-det-carbs" class="form-input"
+               placeholder="250" step="1" min="0">
+        <span class="form-unit">g</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">📊 追加項目 <span class="meal-optional">（任意）</span></div>
+      <div class="form-row">
+        <label class="form-label">食物繊維</label>
+        <input type="number" id="meal-det-fiber" class="form-input"
+               placeholder="20" step="1" min="0">
+        <span class="form-unit">g</span>
+      </div>
+      <div class="form-row">
+        <label class="form-label">塩分</label>
+        <input type="number" id="meal-det-salt" class="form-input"
+               placeholder="6.0" step="0.1" min="0">
+        <span class="form-unit">g</span>
+      </div>
+      <div class="form-row">
+        <label class="form-label">水分</label>
+        <input type="number" id="meal-det-water" class="form-input"
+               placeholder="2000" step="100" min="0">
+        <span class="form-unit">ml</span>
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">カフェイン</label>
+        <input type="number" id="meal-det-caffeine" class="form-input"
+               placeholder="100" step="1" min="0">
+        <span class="form-unit">mg</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🍱 食事メモ <span class="meal-optional">（任意）</span></div>
+      <div class="form-label" style="margin-bottom:8px">トレーニング前</div>
+      <textarea id="meal-det-premeal" class="form-textarea"
+                placeholder="例：プロテイン、バナナ、おにぎり"
+                style="min-height:72px"></textarea>
+      <div class="form-label" style="margin-top:14px;margin-bottom:8px">トレーニング後</div>
+      <textarea id="meal-det-postmeal" class="form-textarea"
+                placeholder="例：鶏胸肉、白米、ブロッコリー"
+                style="min-height:72px"></textarea>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">📝 メモ <span class="meal-optional">（任意）</span></div>
+      <textarea id="meal-det-memo" class="form-textarea"
+                placeholder="気づきや特記事項など"></textarea>
+    </div>
+
+  </div><!-- /#meal-detail-form -->
+
+  <button class="btn btn-primary" id="meal-save-btn" onclick="mealSave()">💾 保存する</button>
+  <div style="height:24px"></div>
+
+</div><!-- /#meal-pane-record -->
+
+<!-- ===== 履歴タブ ===== -->
+<div id="meal-pane-history" class="tr-pane">
+  <div id="meal-hist-list">
+    <div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>
+  </div>
+  <div style="height:24px"></div>
+</div>
+
+<script>
+// ===== 食事記録 STEP2 =====
+
+var mealHistLoaded      = false;
+var mealHistRecords     = [];
+var mealCurrentMode     = 'easy'; // 'easy' | 'detail'
+var mealEasySelections  = {
+  amount: '', protein: '', carbs: '', fat: '',
+  preWorkoutMeal: '', preWorkoutTiming: '', preWorkoutCarbs: ''
+};
+
+// ===== 初期化（ページロード時） =====
+(function mealInit() {
+  // 前回の入力方式をLocalStorageから復元
+  try {
+    var saved = localStorage.getItem('mealInputMode');
+    if (saved === 'easy' || saved === 'detail') mealCurrentMode = saved;
+  } catch(e) {}
+
+  // 今日の日付をセット
+  var t = new Date();
+  var today = t.getFullYear() + '-' +
+    String(t.getMonth() + 1).padStart(2, '0') + '-' +
+    String(t.getDate()).padStart(2, '0');
+  var el = document.getElementById('meal-date');
+  if (el) el.value = today;
+
+  // 入力モードUIを初期化
+  mealSwitchMode(mealCurrentMode);
+})();
+
+// ===== タブ切替（記録/履歴） =====
+
+function showMealTab(name, btn) {
+  document.querySelectorAll('#meal-tabs .body-tab').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('#meal-pane-record, #meal-pane-history').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('meal-pane-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'history') mealLoadHistory();
+}
+
+// ===== 入力方式切替 =====
+
+function mealSwitchMode(mode) {
+  mealCurrentMode = mode;
+  try { localStorage.setItem('mealInputMode', mode); } catch(e) {}
+
+  var eBtn = document.getElementById('meal-mode-btn-easy');
+  var dBtn = document.getElementById('meal-mode-btn-detail');
+  var eForm = document.getElementById('meal-easy-form');
+  var dForm = document.getElementById('meal-detail-form');
+  if (!eBtn || !dBtn || !eForm || !dForm) return;
+
+  if (mode === 'easy') {
+    eBtn.classList.add('active');
+    dBtn.classList.remove('active');
+    eForm.style.display = '';
+    dForm.style.display = 'none';
+  } else {
+    dBtn.classList.add('active');
+    eBtn.classList.remove('active');
+    dForm.style.display = '';
+    eForm.style.display = 'none';
+  }
+}
+
+// ===== かんたん入力 — 選択ロジック =====
+
+// 主要4項目：選択は1つのみ（再クリックで変更）
+function mealEasyPick(key, value, btn) {
+  btn.parentElement.querySelectorAll('.choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  mealEasySelections[key] = value;
+}
+
+// トレ前任意項目：再クリックで解除可能なトグル
+function mealEasyToggle(key, value, btn) {
+  if (mealEasySelections[key] === value) {
+    btn.classList.remove('selected');
+    mealEasySelections[key] = '';
+  } else {
+    btn.parentElement.querySelectorAll('.choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+    btn.classList.add('selected');
+    mealEasySelections[key] = value;
+  }
+}
+
+// ===== 保存 =====
+
+function mealSave() {
+  var date = document.getElementById('meal-date').value;
+  if (!date) { showMealResult('error', '日付を入力してください'); return; }
+
+  var btn = document.getElementById('meal-save-btn');
+  var data = { date: date };
+
+  if (mealCurrentMode === 'easy') {
+    var s = mealEasySelections;
+    if (!s.amount && !s.protein && !s.carbs && !s.fat) {
+      showMealResult('error', '食事量・タンパク質・炭水化物・脂質のうち少なくとも1つを選択してください');
+      return;
+    }
+    data.inputMode        = 'かんたん';
+    data.mealAmount       = s.amount;
+    data.proteinLevel     = s.protein;
+    data.carbLevel        = s.carbs;
+    data.fatLevel         = s.fat;
+    data.preWorkoutMeal   = s.preWorkoutMeal;
+    data.preWorkoutTiming = s.preWorkoutTiming;
+    data.preWorkoutCarbs  = s.preWorkoutCarbs;
+    data.memo             = document.getElementById('meal-easy-memo').value;
+
+  } else {
+    var calories = document.getElementById('meal-det-calories').value;
+    var protein  = document.getElementById('meal-det-protein').value;
+    var fat      = document.getElementById('meal-det-fat').value;
+    var carbs    = document.getElementById('meal-det-carbs').value;
+    var fiber    = document.getElementById('meal-det-fiber').value;
+    var salt     = document.getElementById('meal-det-salt').value;
+    var water    = document.getElementById('meal-det-water').value;
+    var caffeine = document.getElementById('meal-det-caffeine').value;
+
+    if (!calories && !protein && !fat && !carbs) {
+      showMealResult('error', 'カロリー・タンパク質・脂質・炭水化物のうち少なくとも1つを入力してください');
+      return;
+    }
+    // 負数チェック（空欄は許可）
+    var numChecks = [
+      ['カロリー', calories], ['タンパク質', protein], ['脂質', fat],
+      ['炭水化物', carbs], ['食物繊維', fiber], ['塩分', salt],
+      ['水分', water], ['カフェイン', caffeine]
+    ];
+    for (var i = 0; i < numChecks.length; i++) {
+      var v = numChecks[i][1];
+      if (v !== '') {
+        var n = parseFloat(v);
+        if (isNaN(n) || n < 0) {
+          showMealResult('error', numChecks[i][0] + 'は0以上の数値を入力してください');
+          return;
+        }
+      }
+    }
+
+    data.inputMode = '詳細';
+    data.calories  = calories;
+    data.protein   = protein;
+    data.fat       = fat;
+    data.carbs     = carbs;
+    data.fiber     = fiber;
+    data.salt      = salt;
+    data.water     = water;
+    data.caffeine  = caffeine;
+    data.preMeal   = document.getElementById('meal-det-premeal').value;
+    data.postMeal  = document.getElementById('meal-det-postmeal').value;
+    data.memo      = document.getElementById('meal-det-memo').value;
+  }
+
+  btn.textContent = '保存中…';
+  btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      if (res && res.success) {
+        showMealResult('success', '食事・栄養記録を保存しました！');
+        mealHistLoaded = false;
+        mealReset();
+      } else {
+        showMealResult('error', 'エラー: ' + (res ? res.error : '不明'));
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      showMealResult('error', '保存に失敗しました: ' + (err.message || ''));
+    })
+    .saveMealData(data);
+}
+
+// ===== フォームリセット =====
+
+function mealReset() {
+  var t = new Date();
+  var today = t.getFullYear() + '-' +
+    String(t.getMonth() + 1).padStart(2, '0') + '-' +
+    String(t.getDate()).padStart(2, '0');
+  document.getElementById('meal-date').value = today;
+
+  // かんたん入力リセット
+  mealEasySelections = {
+    amount: '', protein: '', carbs: '', fat: '',
+    preWorkoutMeal: '', preWorkoutTiming: '', preWorkoutCarbs: ''
+  };
+  document.querySelectorAll('#meal-easy-form .choice-btn').forEach(function(b) {
+    b.classList.remove('selected');
+  });
+  document.getElementById('meal-easy-memo').value = '';
+
+  // 詳細入力リセット
+  ['meal-det-calories','meal-det-protein','meal-det-fat','meal-det-carbs',
+   'meal-det-fiber','meal-det-salt','meal-det-water','meal-det-caffeine',
+   'meal-det-premeal','meal-det-postmeal','meal-det-memo'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+// ===== 結果メッセージ =====
+
+function showMealResult(type, message) {
+  var el = document.getElementById('meal-result');
+  el.className = 'save-result ' + type;
+  el.textContent = message;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ===== 履歴 =====
+
+function mealLoadHistory() {
+  if (mealHistLoaded) { mealRenderHistory(mealHistRecords); return; }
+  document.getElementById('meal-hist-list').innerHTML =
+    '<div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      mealHistLoaded = true;
+      if (res && res.success) mealHistRecords = res.records;
+      mealRenderHistory(mealHistRecords);
+    })
+    .withFailureHandler(function() {
+      document.getElementById('meal-hist-list').innerHTML =
+        '<div style="text-align:center;padding:32px;color:#C62828">読み込みに失敗しました</div>';
+    })
+    .getMealHistory();
+}
+
+function mealRenderHistory(records) {
+  var list = document.getElementById('meal-hist-list');
+  if (!records || records.length === 0) {
+    list.innerHTML = '<div class="placeholder-card" style="margin-top:0">' +
+      '<div class="icon">🍗</div><div class="title">記録がありません</div>' +
+      '<div class="desc">食事を記録するとここに履歴が表示されます</div></div>';
+    return;
+  }
+  var html = '';
+  records.forEach(function(r, si) {
+    var dateLabel = r.date.replace(/-/g, '/');
+    var isEasy    = r.inputMode === 'かんたん';
+    var isDetail  = r.inputMode === '詳細';
+
+    // サマリー行
+    var summary = '';
+    if (isEasy) {
+      var parts = [];
+      if (r.proteinLevel) parts.push('P:' + r.proteinLevel);
+      if (r.carbLevel)    parts.push('C:' + r.carbLevel);
+      if (r.fatLevel)     parts.push('F:' + r.fatLevel);
+      summary = '⚡' + (parts.length ? ' ' + parts.join(' / ') : ' かんたん記録');
+    } else if (isDetail) {
+      var dp = [];
+      if (r.calories) dp.push(r.calories + 'kcal');
+      if (r.protein)  dp.push('P' + r.protein + 'g');
+      summary = '📊' + (dp.length ? ' ' + dp.join('  ') : ' 詳細記録');
+    } else {
+      // レガシーデータ（STEP2以前）
+      var lp = [];
+      if (r.protein)  lp.push('P:' + r.protein + 'g');
+      if (r.calories) lp.push(r.calories + 'kcal');
+      summary = lp.join(' / ') || '-';
+    }
+
+    html += '<div class="tr-hist-card">';
+    html += '<div class="tr-hist-header" onclick="mealHistToggle(' + si + ')">';
+    html += '<div style="min-width:0;flex:1">';
+    html += '<div class="tr-hist-date">' + dateLabel + '</div>';
+    html += '<div class="tr-hist-summary">' + mealEsc(summary) + '</div>';
+    html += '</div>';
+    html += '<button class="edit-hist-btn" onclick="event.stopPropagation();mealEditOpen(' + si + ')">編集</button>';
+    html += '<span class="tr-hist-arrow" id="meal-hist-arrow-' + si + '" style="margin-left:8px">▶</span>';
+    html += '</div>';
+
+    html += '<div id="meal-hist-detail-' + si + '" class="tr-hist-detail">';
+
+    if (isEasy) {
+      // かんたん入力の詳細表示
+      var ef = [];
+      if (r.mealAmount)       ef.push(['食事量', r.mealAmount]);
+      if (r.proteinLevel)     ef.push(['タンパク質', r.proteinLevel]);
+      if (r.carbLevel)        ef.push(['炭水化物', r.carbLevel]);
+      if (r.fatLevel)         ef.push(['脂質', r.fatLevel]);
+      if (r.preWorkoutMeal)   ef.push(['トレ前食事', r.preWorkoutMeal]);
+      if (r.preWorkoutTiming) ef.push(['タイミング', r.preWorkoutTiming]);
+      if (r.preWorkoutCarbs)  ef.push(['トレ前炭水化物', r.preWorkoutCarbs]);
+      if (ef.length) {
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0">';
+        ef.forEach(function(f) {
+          html += '<div style="background:#F5F7FA;border-radius:8px;padding:8px 12px">' +
+            '<div style="font-size:11px;color:var(--text-sub);margin-bottom:2px">' + mealEsc(f[0]) + '</div>' +
+            '<div style="font-size:15px;font-weight:700">' + mealEsc(f[1]) + '</div></div>';
+        });
+        html += '</div>';
+      }
+    } else {
+      // 詳細入力 / レガシー
+      var df = [];
+      if (r.calories) df.push(['カロリー', r.calories + ' kcal']);
+      if (r.protein)  df.push(['タンパク質', r.protein + 'g']);
+      if (r.fat)      df.push(['脂質', r.fat + 'g']);
+      if (r.carbs)    df.push(['炭水化物', r.carbs + 'g']);
+      if (r.fiber)    df.push(['食物繊維', r.fiber + 'g']);
+      if (r.salt)     df.push(['塩分', r.salt + 'g']);
+      if (r.water)    df.push(['水分', r.water + 'ml']);
+      if (r.caffeine) df.push(['カフェイン', r.caffeine + 'mg']);
+      if (df.length) {
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0">';
+        df.forEach(function(f) {
+          html += '<div style="background:#F5F7FA;border-radius:8px;padding:8px 12px">' +
+            '<div style="font-size:11px;color:var(--text-sub);margin-bottom:2px">' + mealEsc(f[0]) + '</div>' +
+            '<div style="font-size:15px;font-weight:700">' + mealEsc(f[1]) + '</div></div>';
+        });
+        html += '</div>';
+      }
+      if (r.preMeal)  html += '<div style="font-size:12px;margin-top:6px"><span style="color:var(--text-sub)">運動前: </span>' + mealEsc(r.preMeal) + '</div>';
+      if (r.postMeal) html += '<div style="font-size:12px;margin-top:4px"><span style="color:var(--text-sub)">運動後: </span>' + mealEsc(r.postMeal) + '</div>';
+    }
+
+    if (r.memo) html += '<div style="font-size:12px;color:var(--text-sub);padding-top:8px;margin-top:4px;border-top:1px solid var(--border)">' + mealEsc(r.memo) + '</div>';
+    html += '</div></div>';
+  });
+  list.innerHTML = html;
+}
+
+function mealHistToggle(si) {
+  var d = document.getElementById('meal-hist-detail-' + si);
+  var a = document.getElementById('meal-hist-arrow-' + si);
+  var open = d.style.display === 'block';
+  d.style.display = open ? 'none' : 'block';
+  a.textContent   = open ? '▶' : '▼';
+}
+
+function mealEsc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== 食事履歴 編集 =====
+var _mealEditIdx  = -1;
+var _mealEditMode = 'easy';
+var _mealEditEasySel = { amount:'', protein:'', carbs:'', fat:'', preWorkoutMeal:'', preWorkoutTiming:'', preWorkoutCarbs:'' };
+
+function mealEditOpen(si) {
+  var r = mealHistRecords[si];
+  if (!r) return;
+  _mealEditIdx  = si;
+  _mealEditMode = (r.inputMode === '詳細') ? 'detail' : 'easy';
+
+  document.getElementById('moe-date').value = r.date || '';
+
+  // モード切替
+  mealEditSwitchMode(_mealEditMode);
+
+  if (_mealEditMode === 'easy') {
+    // かんたん入力復元
+    _mealEditEasySel = {
+      amount: r.mealAmount || '', protein: r.proteinLevel || '',
+      carbs: r.carbLevel || '', fat: r.fatLevel || '',
+      preWorkoutMeal: r.preWorkoutMeal || '', preWorkoutTiming: r.preWorkoutTiming || '',
+      preWorkoutCarbs: r.preWorkoutCarbs || ''
+    };
+    var easyGroups = {
+      'moe-ea-amount':  'amount',  'moe-ea-protein': 'protein',
+      'moe-ea-carbs':   'carbs',   'moe-ea-fat':     'fat',
+      'moe-ea-premeal': 'preWorkoutMeal', 'moe-ea-timing': 'preWorkoutTiming',
+      'moe-ea-precarbs':'preWorkoutCarbs'
+    };
+    Object.keys(easyGroups).forEach(function(gId) {
+      var key = easyGroups[gId];
+      document.querySelectorAll('#' + gId + ' .choice-btn').forEach(function(b) {
+        b.classList.toggle('selected', b.dataset.val === _mealEditEasySel[key]);
+      });
+    });
+    document.getElementById('moe-easy-memo').value = r.memo || '';
+  } else {
+    document.getElementById('moe-det-calories').value = r.calories  || '';
+    document.getElementById('moe-det-protein').value  = r.protein   || '';
+    document.getElementById('moe-det-fat').value      = r.fat       || '';
+    document.getElementById('moe-det-carbs').value    = r.carbs     || '';
+    document.getElementById('moe-det-fiber').value    = r.fiber     || '';
+    document.getElementById('moe-det-salt').value     = r.salt      || '';
+    document.getElementById('moe-det-water').value    = r.water     || '';
+    document.getElementById('moe-det-caffeine').value = r.caffeine  || '';
+    document.getElementById('moe-det-premeal').value  = r.preMeal   || '';
+    document.getElementById('moe-det-postmeal').value = r.postMeal  || '';
+    document.getElementById('moe-det-memo').value     = r.memo      || '';
+  }
+
+  var res = document.getElementById('moe-result');
+  res.className = 'edit-result'; res.textContent = '';
+  document.getElementById('meal-edit-modal').style.display = 'flex';
+}
+
+function mealEditSwitchMode(mode) {
+  _mealEditMode = mode;
+  var eBtn  = document.getElementById('moe-mode-btn-easy');
+  var dBtn  = document.getElementById('moe-mode-btn-detail');
+  var eForm = document.getElementById('moe-easy-form');
+  var dForm = document.getElementById('moe-detail-form');
+  if (mode === 'easy') {
+    eBtn.classList.add('active'); dBtn.classList.remove('active');
+    eForm.style.display = ''; dForm.style.display = 'none';
+  } else {
+    dBtn.classList.add('active'); eBtn.classList.remove('active');
+    dForm.style.display = ''; eForm.style.display = 'none';
+  }
+}
+
+function mealEditEasyPick(key, value, btn) {
+  btn.parentElement.querySelectorAll('.choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  _mealEditEasySel[key] = value;
+}
+
+function mealEditEasyToggle(key, value, btn) {
+  if (_mealEditEasySel[key] === value) {
+    btn.classList.remove('selected'); _mealEditEasySel[key] = '';
+  } else {
+    btn.parentElement.querySelectorAll('.choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+    btn.classList.add('selected'); _mealEditEasySel[key] = value;
+  }
+}
+
+function mealEditClose() {
+  document.getElementById('meal-edit-modal').style.display = 'none';
+  _mealEditIdx = -1;
+}
+
+function mealEditBgClick(e) {
+  if (e.target === document.getElementById('meal-edit-modal')) mealEditClose();
+}
+
+function mealEditSave() {
+  var r = mealHistRecords[_mealEditIdx];
+  if (!r || !r.id) { _moeShowResult('error', 'IDが見つかりません'); return; }
+  var date = document.getElementById('moe-date').value;
+  if (!date) { _moeShowResult('error', '日付を入力してください'); return; }
+  var data = { id: r.id, date: date };
+
+  if (_mealEditMode === 'easy') {
+    var s = _mealEditEasySel;
+    if (!s.amount && !s.protein && !s.carbs && !s.fat) {
+      _moeShowResult('error', '少なくとも1つ選択してください'); return;
+    }
+    data.inputMode        = 'かんたん';
+    data.mealAmount       = s.amount; data.proteinLevel  = s.protein;
+    data.carbLevel        = s.carbs;  data.fatLevel      = s.fat;
+    data.preWorkoutMeal   = s.preWorkoutMeal; data.preWorkoutTiming = s.preWorkoutTiming;
+    data.preWorkoutCarbs  = s.preWorkoutCarbs;
+    data.memo             = document.getElementById('moe-easy-memo').value;
+    data.protein = ''; data.calories = ''; data.fat = ''; data.carbs = '';
+    data.fiber = ''; data.salt = ''; data.water = ''; data.caffeine = '';
+    data.preMeal = ''; data.postMeal = '';
+  } else {
+    data.inputMode = '詳細';
+    data.calories  = document.getElementById('moe-det-calories').value;
+    data.protein   = document.getElementById('moe-det-protein').value;
+    data.fat       = document.getElementById('moe-det-fat').value;
+    data.carbs     = document.getElementById('moe-det-carbs').value;
+    data.fiber     = document.getElementById('moe-det-fiber').value;
+    data.salt      = document.getElementById('moe-det-salt').value;
+    data.water     = document.getElementById('moe-det-water').value;
+    data.caffeine  = document.getElementById('moe-det-caffeine').value;
+    data.preMeal   = document.getElementById('moe-det-premeal').value;
+    data.postMeal  = document.getElementById('moe-det-postmeal').value;
+    data.memo      = document.getElementById('moe-det-memo').value;
+    data.mealAmount = ''; data.proteinLevel = ''; data.carbLevel = '';
+    data.fatLevel = ''; data.preWorkoutMeal = ''; data.preWorkoutTiming = ''; data.preWorkoutCarbs = '';
+  }
+
+  var btn = document.getElementById('moe-save-btn');
+  btn.textContent = '保存中…'; btn.disabled = true;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = '変更を保存'; btn.disabled = false;
+      if (res && res.success) {
+        mealHistLoaded = false;
+        if (typeof _aiMealRecs3 !== 'undefined') { _aiCondRecs = null; _aiMealRecs3 = null; _aiMasterMap = null; }
+        mealEditClose();
+        mealLoadHistory();
+        if (typeof homeRefresh === 'function') homeRefresh();
+        if (typeof showToast === 'function') showToast('✓ 変更しました', 'success');
+      } else {
+        console.error('updateMealRecord error:', res ? res.error : '不明');
+        _moeShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.textContent = '変更を保存'; btn.disabled = false;
+      console.error('updateMealRecord failure:', err);
+      _moeShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+    })
+    .updateMealRecord(data);
+}
+
+function _moeShowResult(type, msg) {
+  var el = document.getElementById('moe-result');
+  el.className = 'edit-result ' + type;
+  el.textContent = msg;
+}
+</script>
+
+<!-- 食事 編集モーダル -->
+<div id="meal-edit-modal" class="edit-modal" style="display:none" onclick="mealEditBgClick(event)">
+  <div class="edit-modal-sheet">
+    <div class="edit-modal-header">
+      <span class="edit-modal-title">食事記録を編集</span>
+      <button class="edit-modal-close" onclick="mealEditClose()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <div class="edit-result" id="moe-result"></div>
+      <button class="btn-edit-save-top" onclick="mealEditSave()">変更を保存</button>
+      <div class="form-section">
+        <div class="form-section-title">📅 日付</div>
+        <input type="date" id="moe-date" class="form-input" style="width:100%;font-size:16px">
+      </div>
+      <div class="body-tabs meal-mode-tabs">
+        <button class="body-tab" id="moe-mode-btn-easy"   onclick="mealEditSwitchMode('easy')">⚡ かんたん</button>
+        <button class="body-tab" id="moe-mode-btn-detail" onclick="mealEditSwitchMode('detail')">📊 詳細</button>
+      </div>
+
+      <!-- かんたん入力 -->
+      <div id="moe-easy-form">
+        <div class="form-section">
+          <div class="form-section-title">🍽️ 1日の食事量</div>
+          <div class="choice-group" id="moe-ea-amount">
+            <button class="choice-btn" data-val="少ない" onclick="mealEditEasyPick('amount','少ない',this)">少ない</button>
+            <button class="choice-btn" data-val="普通"   onclick="mealEditEasyPick('amount','普通',this)">普通</button>
+            <button class="choice-btn" data-val="多い"   onclick="mealEditEasyPick('amount','多い',this)">多い</button>
+          </div></div>
+        <div class="form-section">
+          <div class="form-section-title">🥩 タンパク質</div>
+          <div class="choice-group" id="moe-ea-protein">
+            <button class="choice-btn" data-val="少ない" onclick="mealEditEasyPick('protein','少ない',this)">少ない</button>
+            <button class="choice-btn" data-val="普通"   onclick="mealEditEasyPick('protein','普通',this)">普通</button>
+            <button class="choice-btn" data-val="多い"   onclick="mealEditEasyPick('protein','多い',this)">多い</button>
+          </div></div>
+        <div class="form-section">
+          <div class="form-section-title">🌾 炭水化物</div>
+          <div class="choice-group" id="moe-ea-carbs">
+            <button class="choice-btn" data-val="少ない" onclick="mealEditEasyPick('carbs','少ない',this)">少ない</button>
+            <button class="choice-btn" data-val="普通"   onclick="mealEditEasyPick('carbs','普通',this)">普通</button>
+            <button class="choice-btn" data-val="多い"   onclick="mealEditEasyPick('carbs','多い',this)">多い</button>
+          </div></div>
+        <div class="form-section">
+          <div class="form-section-title">🧈 脂質</div>
+          <div class="choice-group" id="moe-ea-fat">
+            <button class="choice-btn" data-val="少ない" onclick="mealEditEasyPick('fat','少ない',this)">少ない</button>
+            <button class="choice-btn" data-val="普通"   onclick="mealEditEasyPick('fat','普通',this)">普通</button>
+            <button class="choice-btn" data-val="多い"   onclick="mealEditEasyPick('fat','多い',this)">多い</button>
+          </div></div>
+        <div class="form-section">
+          <div class="form-section-title">🏋️ トレ前の食事 <span class="meal-optional">（任意）</span></div>
+          <div class="choice-group" id="moe-ea-premeal">
+            <button class="choice-btn" data-val="なし"       onclick="mealEditEasyToggle('preWorkoutMeal','なし',this)">なし</button>
+            <button class="choice-btn" data-val="軽め"       onclick="mealEditEasyToggle('preWorkoutMeal','軽め',this)">軽め</button>
+            <button class="choice-btn" data-val="普通"       onclick="mealEditEasyToggle('preWorkoutMeal','普通',this)">普通</button>
+            <button class="choice-btn" data-val="しっかり"   onclick="mealEditEasyToggle('preWorkoutMeal','しっかり',this)">しっかり</button>
+          </div></div>
+        <div class="form-section">
+          <div class="form-section-title">⏱️ トレ前のタイミング <span class="meal-optional">（任意）</span></div>
+          <div class="choice-group meal-wrap-group" id="moe-ea-timing">
+            <button class="choice-btn meal-wide-btn" data-val="1時間未満"   onclick="mealEditEasyToggle('preWorkoutTiming','1時間未満',this)">1時間未満</button>
+            <button class="choice-btn meal-wide-btn" data-val="1〜2時間前"  onclick="mealEditEasyToggle('preWorkoutTiming','1〜2時間前',this)">1〜2時間前</button>
+            <button class="choice-btn meal-wide-btn" data-val="2〜3時間前"  onclick="mealEditEasyToggle('preWorkoutTiming','2〜3時間前',this)">2〜3時間前</button>
+            <button class="choice-btn meal-wide-btn" data-val="3時間以上前" onclick="mealEditEasyToggle('preWorkoutTiming','3時間以上前',this)">3時間以上前</button>
+            <button class="choice-btn meal-wide-btn" data-val="不明"        onclick="mealEditEasyToggle('preWorkoutTiming','不明',this)">不明</button>
+          </div></div>
+        <div class="form-section">
+          <div class="form-section-title">🌾 トレ前の炭水化物 <span class="meal-optional">（任意）</span></div>
+          <div class="choice-group meal-wrap-group" id="moe-ea-precarbs">
+            <button class="choice-btn meal-wide-btn" data-val="なし"   onclick="mealEditEasyToggle('preWorkoutCarbs','なし',this)">なし</button>
+            <button class="choice-btn meal-wide-btn" data-val="少なめ" onclick="mealEditEasyToggle('preWorkoutCarbs','少なめ',this)">少なめ</button>
+            <button class="choice-btn meal-wide-btn" data-val="普通"   onclick="mealEditEasyToggle('preWorkoutCarbs','普通',this)">普通</button>
+            <button class="choice-btn meal-wide-btn" data-val="多め"   onclick="mealEditEasyToggle('preWorkoutCarbs','多め',this)">多め</button>
+            <button class="choice-btn meal-wide-btn" data-val="不明"   onclick="mealEditEasyToggle('preWorkoutCarbs','不明',this)">不明</button>
+          </div></div>
+        <div class="form-section">
+          <div class="form-section-title">📝 メモ</div>
+          <textarea id="moe-easy-memo" class="form-textarea" placeholder="気づきなど" style="min-height:60px"></textarea>
+        </div>
+      </div>
+
+      <!-- 詳細入力 -->
+      <div id="moe-detail-form" style="display:none">
+        <div class="form-section">
+          <div class="form-section-title">🔥 エネルギー・主要栄養素</div>
+          <div class="form-row"><label class="form-label">カロリー</label>
+            <input type="number" id="moe-det-calories" class="form-input" placeholder="2000" step="10" min="0">
+            <span class="form-unit">kcal</span></div>
+          <div class="form-row"><label class="form-label">タンパク質</label>
+            <input type="number" id="moe-det-protein" class="form-input" placeholder="150" step="1" min="0">
+            <span class="form-unit">g</span></div>
+          <div class="form-row"><label class="form-label">脂質</label>
+            <input type="number" id="moe-det-fat" class="form-input" placeholder="60" step="1" min="0">
+            <span class="form-unit">g</span></div>
+          <div class="form-row" style="margin-bottom:0"><label class="form-label">炭水化物</label>
+            <input type="number" id="moe-det-carbs" class="form-input" placeholder="250" step="1" min="0">
+            <span class="form-unit">g</span></div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">📊 追加項目 <span class="meal-optional">（任意）</span></div>
+          <div class="form-row"><label class="form-label">食物繊維</label>
+            <input type="number" id="moe-det-fiber" class="form-input" placeholder="20" step="1" min="0">
+            <span class="form-unit">g</span></div>
+          <div class="form-row"><label class="form-label">塩分</label>
+            <input type="number" id="moe-det-salt" class="form-input" placeholder="6.0" step="0.1" min="0">
+            <span class="form-unit">g</span></div>
+          <div class="form-row"><label class="form-label">水分</label>
+            <input type="number" id="moe-det-water" class="form-input" placeholder="2000" step="100" min="0">
+            <span class="form-unit">ml</span></div>
+          <div class="form-row" style="margin-bottom:0"><label class="form-label">カフェイン</label>
+            <input type="number" id="moe-det-caffeine" class="form-input" placeholder="100" step="1" min="0">
+            <span class="form-unit">mg</span></div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">🍱 食事メモ <span class="meal-optional">（任意）</span></div>
+          <div class="form-label" style="margin-bottom:8px">トレーニング前</div>
+          <textarea id="moe-det-premeal" class="form-textarea" placeholder="例：プロテイン、バナナ" style="min-height:60px"></textarea>
+          <div class="form-label" style="margin-top:14px;margin-bottom:8px">トレーニング後</div>
+          <textarea id="moe-det-postmeal" class="form-textarea" placeholder="例：鶏胸肉、白米" style="min-height:60px"></textarea>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">📝 メモ</div>
+          <textarea id="moe-det-memo" class="form-textarea" placeholder="気づきなど"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-edit-cancel" onclick="mealEditClose()">キャンセル</button>
+      <button class="btn-edit-save" id="moe-save-btn" onclick="mealEditSave()">変更を保存</button>
+    </div>
+  </div>
+</div>

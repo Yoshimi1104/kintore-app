@@ -1,0 +1,256 @@
+<!-- 内部タブ -->
+<div id="care-tabs" class="body-tabs" style="margin-bottom:12px">
+  <button class="body-tab active" onclick="showCareTab('record', this)">記録する</button>
+  <button class="body-tab" onclick="showCareTab('history', this)">履歴</button>
+</div>
+
+<!-- ===== 記録タブ ===== -->
+<div id="care-pane-record" class="tr-pane active">
+
+  <!-- 保存結果メッセージ -->
+  <div class="save-result" id="care-result"></div>
+
+  <!-- 日付 -->
+  <div class="form-section">
+    <div class="form-section-title">📅 日付</div>
+    <input type="date" id="care-date" class="form-input" style="width:100%; font-size:18px;">
+  </div>
+
+  <!-- クールダウン -->
+  <div class="form-section">
+    <div class="form-section-title">🧘 クールダウン</div>
+    <div class="supp-group" id="care-cd-buttons">
+      <button class="supp-btn" onclick="careToggle('stretch',   this)">ストレッチ</button>
+      <button class="supp-btn" onclick="careToggle('walking',   this)">ウォーキング</button>
+      <button class="supp-btn" onclick="careToggle('running',   this)">ランニング</button>
+      <button class="supp-btn" onclick="careToggle('foamRoller',this)">筋膜リリース</button>
+    </div>
+    <div id="care-walking-wrap" style="display:none">
+      <div class="cd-time-row">
+        <span class="cd-time-label">歩行時間</span>
+        <input type="number" id="care-walking-min" class="cd-time-input"
+               placeholder="20" step="5" min="0">
+        <span class="form-unit">分</span>
+      </div>
+    </div>
+    <div id="care-running-wrap" style="display:none">
+      <div class="cd-time-row">
+        <span class="cd-time-label">走行時間</span>
+        <input type="number" id="care-running-min" class="cd-time-input"
+               placeholder="10" step="5" min="0">
+        <span class="form-unit">分</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- その他のケア -->
+  <div class="form-section">
+    <div class="form-section-title">💆 その他のケア <span style="font-weight:400;color:#aaa">（任意）</span></div>
+    <input type="text" id="care-other" class="form-input"
+           style="width:100%"
+           placeholder="例：アイシング、マッサージ、サウナ">
+  </div>
+
+  <!-- メモ -->
+  <div class="form-section">
+    <div class="form-section-title">📝 メモ <span style="font-weight:400;color:#aaa">（任意）</span></div>
+    <textarea id="care-memo" class="form-textarea"
+              placeholder="気になることや特記事項があれば入力してください"></textarea>
+  </div>
+
+  <!-- 保存ボタン -->
+  <button class="btn btn-primary" id="care-save-btn" onclick="careSave()">
+    💾 保存する
+  </button>
+  <div style="height:24px"></div>
+
+</div><!-- /care-pane-record -->
+
+<!-- ===== 履歴タブ ===== -->
+<div id="care-pane-history" class="tr-pane">
+  <div id="care-hist-list">
+    <div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>
+  </div>
+  <div style="height:24px"></div>
+</div>
+
+<script>
+var careSel = { stretch: false, walking: false, running: false, foamRoller: false };
+var careHistLoaded  = false;
+var careHistRecords = [];
+
+(function() {
+  var t = new Date();
+  document.getElementById('care-date').value =
+    t.getFullYear() + '-' +
+    String(t.getMonth() + 1).padStart(2, '0') + '-' +
+    String(t.getDate()).padStart(2, '0');
+})();
+
+function showCareTab(name, btn) {
+  document.querySelectorAll('#care-tabs .body-tab').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('#care-pane-record, #care-pane-history').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('care-pane-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'history') careLoadHistory();
+}
+
+function careToggle(key, btn) {
+  careSel[key] = !careSel[key];
+  var wrapMap = { walking: 'care-walking-wrap', running: 'care-running-wrap' };
+  if (careSel[key]) {
+    btn.classList.add('selected');
+    if (wrapMap[key]) document.getElementById(wrapMap[key]).style.display = 'block';
+  } else {
+    btn.classList.remove('selected');
+    if (wrapMap[key]) {
+      document.getElementById(wrapMap[key]).style.display = 'none';
+      var inp = key === 'walking' ? 'care-walking-min' : 'care-running-min';
+      document.getElementById(inp).value = '';
+    }
+  }
+}
+
+function careSave() {
+  var date = document.getElementById('care-date').value;
+  if (!date) { showCareResult('error', '日付を入力してください'); return; }
+
+  var cardioList = [];
+  if (careSel.walking) {
+    var wMin = document.getElementById('care-walking-min').value;
+    cardioList.push('ウォーキング' + (wMin ? ':' + wMin + '分' : ''));
+  }
+  if (careSel.running) {
+    var rMin = document.getElementById('care-running-min').value;
+    cardioList.push('ランニング' + (rMin ? ':' + rMin + '分' : ''));
+  }
+
+  var data = {
+    date:       date,
+    stretch:    careSel.stretch,
+    foamRoller: careSel.foamRoller,
+    cardio:     cardioList.join('・'),
+    otherCare:  document.getElementById('care-other').value,
+    memo:       document.getElementById('care-memo').value
+  };
+
+  var btn = document.getElementById('care-save-btn');
+  btn.textContent = '保存中…';
+  btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      if (res.success) {
+        showCareResult('success', 'ケア記録を保存しました！');
+        careHistLoaded = false;
+        careReset();
+      } else {
+        showCareResult('error', 'エラー: ' + res.error);
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      showCareResult('error', '保存に失敗しました: ' + err.message);
+    })
+    .saveCareData(data);
+}
+
+function careReset() {
+  careSel = { stretch: false, walking: false, running: false, foamRoller: false };
+  document.querySelectorAll('#care-cd-buttons .supp-btn').forEach(function(b) { b.classList.remove('selected'); });
+  ['care-walking-wrap', 'care-running-wrap'].forEach(function(id) {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('care-walking-min').value = '';
+  document.getElementById('care-running-min').value  = '';
+  document.getElementById('care-other').value = '';
+  document.getElementById('care-memo').value  = '';
+  var t = new Date();
+  document.getElementById('care-date').value =
+    t.getFullYear() + '-' +
+    String(t.getMonth() + 1).padStart(2, '0') + '-' +
+    String(t.getDate()).padStart(2, '0');
+}
+
+function showCareResult(type, message) {
+  var el = document.getElementById('care-result');
+  el.className = 'save-result ' + type;
+  el.textContent = message;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ===== ケア履歴 =====
+function careLoadHistory() {
+  if (careHistLoaded) { careRenderHistory(careHistRecords); return; }
+  document.getElementById('care-hist-list').innerHTML =
+    '<div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      careHistLoaded = true;
+      if (res && res.success) careHistRecords = res.records;
+      careRenderHistory(careHistRecords);
+    })
+    .withFailureHandler(function() {
+      document.getElementById('care-hist-list').innerHTML =
+        '<div style="text-align:center;padding:32px;color:#C62828">読み込みに失敗しました</div>';
+    })
+    .getCareHistory();
+}
+
+function careRenderHistory(records) {
+  var list = document.getElementById('care-hist-list');
+  if (!records || records.length === 0) {
+    list.innerHTML = '<div class="placeholder-card" style="margin-top:0"><div class="icon">💆</div><div class="title">記録がありません</div><div class="desc">「記録する」タブから<br>ケアを記録しましょう</div></div>';
+    return;
+  }
+  var html = '';
+  records.forEach(function(r, si) {
+    var dateLabel = r.date.replace(/-/g, '/');
+    var summary = [];
+    if (r.stretch)    summary.push('ストレッチ');
+    if (r.foamRoller) summary.push('筋膜リリース');
+    if (r.cardio)     summary.push(r.cardio);
+
+    html += '<div class="tr-hist-card">';
+    html += '<div class="tr-hist-header" onclick="careHistToggle(' + si + ')">';
+    html += '<div style="min-width:0;flex:1">';
+    html += '<div class="tr-hist-date">' + dateLabel + '</div>';
+    html += '<div class="tr-hist-summary">' + careEsc(summary.join(' · ') || '-') + '</div>';
+    html += '</div>';
+    html += '<span class="tr-hist-arrow" id="care-hist-arrow-' + si + '">▶</span>';
+    html += '</div>';
+
+    html += '<div id="care-hist-detail-' + si + '" class="tr-hist-detail">';
+    var tags = [];
+    if (r.stretch)    tags.push('ストレッチ');
+    if (r.foamRoller) tags.push('筋膜リリース');
+    if (r.cardio)     tags.push(r.cardio);
+    if (r.otherCare)  tags.push(r.otherCare);
+    if (tags.length > 0) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 0">';
+      tags.forEach(function(t) {
+        html += '<span style="background:#E8F5E9;color:#2E7D32;border-radius:12px;padding:4px 12px;font-size:13px">' + careEsc(t) + '</span>';
+      });
+      html += '</div>';
+    }
+    if (r.memo) html += '<div style="font-size:12px;color:var(--text-sub);margin-top:8px">' + careEsc(r.memo) + '</div>';
+    html += '</div></div>';
+  });
+  list.innerHTML = html;
+}
+
+function careHistToggle(si) {
+  var d = document.getElementById('care-hist-detail-' + si);
+  var a = document.getElementById('care-hist-arrow-' + si);
+  var open = d.style.display === 'block';
+  d.style.display = open ? 'none' : 'block';
+  a.textContent   = open ? '▶' : '▼';
+}
+
+function careEsc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>

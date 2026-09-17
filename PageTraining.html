@@ -1,0 +1,1149 @@
+<!-- 種目名 autocomplete 用データリスト（JSで種目マスタから動的生成） -->
+<datalist id="exercise-datalist"></datalist>
+
+<!-- 内部タブ（記録する / 履歴） -->
+<div id="tr-tabs" class="body-tabs" style="margin-bottom:12px">
+  <button class="body-tab active" onclick="showTrTab('record', this)">記録する</button>
+  <button class="body-tab" onclick="showTrTab('history', this)">履歴</button>
+</div>
+
+<!-- ===== 記録タブ ===== -->
+<div id="tr-pane-record" class="tr-pane active">
+
+  <!-- 保存結果メッセージ -->
+  <div class="save-result" id="training-result"></div>
+
+  <!-- 日付・時刻 -->
+  <div class="form-section">
+    <div class="form-section-title">📅 日付・時刻</div>
+    <div class="form-row">
+      <label class="form-label">日付</label>
+      <input type="date" id="tr-date" class="form-input">
+    </div>
+    <div class="form-row" style="margin-bottom:0">
+      <label class="form-label">開始時刻</label>
+      <input type="time" id="tr-start-time" class="form-input">
+    </div>
+  </div>
+
+  <!-- トレーニング前コンディション -->
+  <div class="form-section">
+    <div class="form-section-title">🌙 トレーニング前のコンディション <span style="font-weight:400;color:#aaa">（任意）</span></div>
+
+    <div class="form-label" style="margin-bottom:8px">疲労度</div>
+    <div class="rating-group" id="pre-rating-fatigue">
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-fatigue','fatigue',1,this)">1<br><small>なし</small></button>
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-fatigue','fatigue',2,this)">2</button>
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-fatigue','fatigue',3,this)">3<br><small>中</small></button>
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-fatigue','fatigue',4,this)">4</button>
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-fatigue','fatigue',5,this)">5<br><small>強い</small></button>
+    </div>
+
+    <div class="form-label" style="margin-top:14px; margin-bottom:8px">筋肉痛</div>
+    <div class="rating-group" id="pre-rating-soreness">
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-soreness','soreness',1,this)">1<br><small>なし</small></button>
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-soreness','soreness',2,this)">2</button>
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-soreness','soreness',3,this)">3<br><small>中</small></button>
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-soreness','soreness',4,this)">4</button>
+      <button class="rating-btn" onclick="preSelectRating('pre-rating-soreness','soreness',5,this)">5<br><small>強い</small></button>
+    </div>
+
+    <div class="form-label" style="margin-top:14px; margin-bottom:8px">体調</div>
+    <div class="choice-group" id="pre-choice-condition">
+      <button class="choice-btn" onclick="preSelectChoice('pre-choice-condition','condition','良い',this)">😊 良い</button>
+      <button class="choice-btn" onclick="preSelectChoice('pre-choice-condition','condition','普通',this)">😐 普通</button>
+      <button class="choice-btn" onclick="preSelectChoice('pre-choice-condition','condition','悪い',this)">😞 悪い</button>
+    </div>
+
+    <div class="form-label" style="margin-top:14px; margin-bottom:8px">自由メモ</div>
+    <textarea id="pre-memo" class="form-textarea"
+              placeholder="体の状態など（任意）" style="min-height:72px"></textarea>
+  </div>
+
+  <!-- サプリメント -->
+  <div class="form-section">
+    <div class="form-section-title">💊 サプリメント <span style="font-weight:400;color:#aaa">（任意）</span></div>
+    <div class="supp-group" id="supp-buttons">
+      <button class="supp-btn" onclick="suppToggle('BCAA',this)">BCAA</button>
+      <button class="supp-btn" onclick="suppToggle('EAA',this)">EAA</button>
+      <button class="supp-btn" onclick="suppToggle('creatine',this)">クレアチン</button>
+      <button class="supp-btn" onclick="suppToggle('protein',this)">プロテイン</button>
+      <button class="supp-btn" id="supp-other-btn" onclick="suppToggleOther(this)">その他</button>
+    </div>
+    <div id="supp-other-wrap" style="display:none; margin-top:10px">
+      <input type="text" id="supp-other-text" class="form-input"
+             placeholder="サプリ名を入力（例：マルチビタミン）">
+    </div>
+  </div>
+
+  <!-- 種目リスト（動的に追加される） -->
+  <div id="tr-exercise-list"></div>
+
+  <!-- 種目追加・マスタ編集ボタン -->
+  <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center">
+    <button class="btn btn-accent" onclick="trAddExercise()" style="flex:1">
+      ➕ 種目を追加
+    </button>
+    <button class="tr-master-open-btn" onclick="trMasterOpen()">部位を確認・編集</button>
+  </div>
+
+  <!-- クールダウン -->
+  <div class="form-section">
+    <div class="form-section-title">🧘 クールダウン <span style="font-weight:400;color:#aaa">（任意）</span></div>
+    <div class="supp-group" id="cd-buttons">
+      <button class="supp-btn" onclick="cooldownToggle('stretch',this)">ストレッチ</button>
+      <button class="supp-btn" onclick="cooldownToggle('walking',this)">ウォーキング</button>
+      <button class="supp-btn" onclick="cooldownToggle('running',this)">ランニング</button>
+      <button class="supp-btn" onclick="cooldownToggle('other',this)">その他</button>
+    </div>
+    <div id="cd-walking-wrap" style="display:none">
+      <div class="cd-time-row">
+        <span class="cd-time-label">歩行時間</span>
+        <input type="number" id="cd-walking-min" class="cd-time-input"
+               placeholder="20" step="5" min="0">
+        <span class="form-unit">分</span>
+      </div>
+    </div>
+    <div id="cd-running-wrap" style="display:none">
+      <div class="cd-time-row">
+        <span class="cd-time-label">走行時間</span>
+        <input type="number" id="cd-running-min" class="cd-time-input"
+               placeholder="10" step="5" min="0">
+        <span class="form-unit">分</span>
+      </div>
+    </div>
+    <div id="cd-other-wrap" style="display:none; margin-top:10px">
+      <input type="text" id="cd-other-text" class="form-input"
+             placeholder="内容を入力（例：フォームローラー）">
+    </div>
+  </div>
+
+  <!-- 保存ボタン -->
+  <button class="btn btn-primary" id="tr-save-btn" onclick="trSave()" disabled>
+    💾 保存する
+  </button>
+  <div style="height:24px"></div>
+
+</div><!-- /tr-pane-record -->
+
+<!-- 筋トレ履歴 編集モーダル -->
+<div id="tr-edit-modal" class="edit-modal" style="display:none" onclick="trEditBgClick(event)">
+  <div class="edit-modal-sheet">
+    <div class="edit-modal-header">
+      <span class="edit-modal-title">筋トレ記録を編集</span>
+      <button class="edit-modal-close" onclick="trEditClose()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <div class="edit-result" id="tr-edit-result"></div>
+      <button class="btn-edit-save-top" id="tr-edit-save-btn-top" onclick="trEditSave()">変更を保存</button>
+      <div id="tr-edit-form"></div>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-edit-cancel" onclick="trEditClose()">キャンセル</button>
+      <button class="btn-edit-save" id="tr-edit-save-btn" onclick="trEditSave()">変更を保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 筋トレ種目 削除確認モーダル -->
+<div id="tr-del-confirm-modal" class="tr-del-confirm-modal" style="display:none">
+  <div class="tr-del-confirm-sheet">
+    <div class="tr-del-confirm-icon">🗑️</div>
+    <div class="tr-del-confirm-title">この筋トレ記録を削除しますか？<br>この操作は元に戻せません。</div>
+    <div class="tr-del-confirm-name" id="tr-del-confirm-name"></div>
+    <div class="tr-del-confirm-btns">
+      <button class="btn-edit-cancel" onclick="trDeleteExClose()">キャンセル</button>
+      <button class="tr-del-confirm-exec-btn" id="tr-del-exec-btn" onclick="trDeleteExConfirm()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 種目マスタ編集モーダル（position:fixed で全ページ共通） -->
+<div id="tr-master-modal" class="tr-master-modal" style="display:none" onclick="trMasterBgClick(event)">
+  <div class="tr-master-sheet">
+    <div class="tr-master-title">
+      <span>種目マスタ</span>
+      <button class="tr-master-close" onclick="trMasterClose()">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-sub);margin:0 0 12px">各種目の主な部位を確認・変更できます。</p>
+    <div id="tr-master-list"></div>
+  </div>
+</div>
+
+<!-- ===== 履歴タブ ===== -->
+<div id="tr-pane-history" class="tr-pane">
+  <div id="tr-hist-list">
+    <div style="text-align:center; padding:48px 16px; color:var(--text-sub); font-size:15px">
+      読み込み中…
+    </div>
+  </div>
+  <div style="height:24px"></div>
+</div>
+
+<script>
+// 種目マスタ（サーバーから動的読み込み。フォールバック用デフォルト一覧を初期値にセット）
+var TR_EXERCISES_DEFAULT = [
+  {name: 'ベンチプレス',            part: '胸'},
+  {name: 'ダンベルフライ',           part: '胸'},
+  {name: 'ダンベルベンチプレス',     part: '胸'},
+  {name: 'チェストプレス',           part: '胸'},
+  {name: 'ペックデック',             part: '胸'},
+  {name: 'デッドリフト',             part: '背中'},
+  {name: 'ラットプルダウン',         part: '背中'},
+  {name: 'シーテッドロウ',           part: '背中'},
+  {name: 'ダンベルロウ',             part: '背中'},
+  {name: 'チンニング(懸垂)',         part: '背中'},
+  {name: 'ショルダープレス',         part: '肩'},
+  {name: 'ダンベルショルダープレス', part: '肩'},
+  {name: 'サイドレイズ',             part: '肩'},
+  {name: 'フロントレイズ',           part: '肩'},
+  {name: 'バーベルカール',           part: '腕(二頭筋)'},
+  {name: 'ダンベルカール',           part: '腕(二頭筋)'},
+  {name: 'トライセプスプレスダウン', part: '腕(三頭筋)'},
+  {name: 'スカルクラッシャー',       part: '腕(三頭筋)'},
+  {name: 'スクワット',               part: '脚'},
+  {name: 'レッグプレス',             part: '脚'},
+  {name: 'レッグエクステンション',   part: '脚(大腿四頭筋)'},
+  {name: 'レッグカール',             part: '脚(ハムストリングス)'},
+  {name: 'カーフレイズ',             part: '脚(ふくらはぎ)'},
+  {name: 'ランジ',                   part: '脚'},
+  {name: 'プランク',                 part: '体幹'},
+  {name: 'クランチ',                 part: '腹筋'},
+  {name: 'レッグレイズ',             part: '腹筋'}
+];
+
+var TR_EXERCISES = TR_EXERCISES_DEFAULT.slice();
+
+function updateExerciseDatalist() {
+  var datalist = document.getElementById('exercise-datalist');
+  if (!datalist) return;
+  datalist.innerHTML = '';
+  TR_EXERCISES.forEach(function(ex) {
+    var opt = document.createElement('option');
+    opt.value = ex.name;
+    datalist.appendChild(opt);
+  });
+}
+
+function initExerciseMaster() {
+  // まずデフォルトリストで即座にオートコンプリートを有効化
+  updateExerciseDatalist();
+  // サーバーの種目マスタを非同期取得して上書き（スプレッドシート変更が即反映される）
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.success && res.exercises && res.exercises.length > 0) {
+        TR_EXERCISES = res.exercises.map(function(ex) {
+          return { name: ex.name, part: ex.part };
+        });
+        updateExerciseDatalist();
+      }
+    })
+    .withFailureHandler(function() {
+      // 失敗時はデフォルトリストのまま継続
+    })
+    .getExerciseMaster();
+}
+
+var trExCount = 0;
+
+// ===== Phase 7: 状態管理 =====
+var preSel       = { sleepQuality: null, fatigue: null, soreness: null, condition: null };
+var suppSelected = { BCAA: false, EAA: false, creatine: false, protein: false, other: false };
+var cdSelected   = { stretch: false, walking: false, running: false, other: false };
+
+// ===== 履歴状態 =====
+var trHistLoaded   = false;
+var trHistSessions = [];
+
+// 今日の日付・現在時刻を自動セット
+(function() {
+  var now = new Date();
+  var y  = now.getFullYear();
+  var mo = String(now.getMonth() + 1).padStart(2, '0');
+  var d  = String(now.getDate()).padStart(2, '0');
+  document.getElementById('tr-date').value = y + '-' + mo + '-' + d;
+  var h  = String(now.getHours()).padStart(2, '0');
+  var mi = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('tr-start-time').value = h + ':' + mi;
+})();
+
+// 種目マスタをサーバーから読み込む（ページ表示時に非同期実行）
+initExerciseMaster();
+
+// ===== 内部タブ切り替え =====
+function showTrTab(name, btn) {
+  document.querySelectorAll('#tr-tabs .body-tab').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  document.querySelectorAll('.tr-pane').forEach(function(p) {
+    p.classList.remove('active');
+  });
+  document.getElementById('tr-pane-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'history') trLoadHistory();
+}
+
+// ===== 種目記録フォーム =====
+function trAddExercise() {
+  trExCount++;
+  var n = trExCount;
+
+  var card = document.createElement('div');
+  card.className = 'tr-exercise-card';
+  card.id = 'tr-ex-' + n;
+  card.innerHTML =
+    '<div class="tr-ex-header">' +
+      '<input type="text" list="exercise-datalist" class="tr-ex-name"' +
+             ' placeholder="種目名（例: ベンチプレス）"' +
+             ' oninput="trOnNameInput(this,' + n + ')">' +
+      '<button class="tr-del-ex-btn" onclick="trRemoveExercise(' + n + ')">×</button>' +
+    '</div>' +
+    '<div class="tr-ex-part" id="tr-ex-part-' + n + '">部位: —</div>' +
+    '<div class="tr-new-part-row" id="tr-new-part-' + n + '" style="display:none">' +
+      '<div class="tr-new-part-label">新種目: 主な部位を選択してください</div>' +
+      '<div class="tr-part-btns">' +
+        '<button type="button" class="tr-part-btn" onclick="trSelectPart(' + n + ',\'胸\',this)">胸</button>' +
+        '<button type="button" class="tr-part-btn" onclick="trSelectPart(' + n + ',\'背中\',this)">背中</button>' +
+        '<button type="button" class="tr-part-btn" onclick="trSelectPart(' + n + ',\'肩\',this)">肩</button>' +
+        '<button type="button" class="tr-part-btn" onclick="trSelectPart(' + n + ',\'腕\',this)">腕</button>' +
+        '<button type="button" class="tr-part-btn" onclick="trSelectPart(' + n + ',\'脚\',this)">脚</button>' +
+        '<button type="button" class="tr-part-btn" onclick="trSelectPart(' + n + ',\'臀部\',this)">臀部</button>' +
+        '<button type="button" class="tr-part-btn" onclick="trSelectPart(' + n + ',\'腹筋\',this)">腹筋</button>' +
+        '<button type="button" class="tr-part-btn" onclick="trSelectPart(' + n + ',\'体幹\',this)">体幹</button>' +
+        '<button type="button" class="tr-part-btn" onclick="trSelectPart(' + n + ',\'その他\',this)">その他</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="tr-setcount-row">' +
+      '<span class="tr-setcount-lbl">セット数</span>' +
+      '<input type="number" id="tr-setcount-' + n + '" class="tr-setcount-inp"' +
+             ' placeholder="例: 3" min="1" max="20" step="1">' +
+      '<button class="tr-setcount-btn" onclick="trApplySetCount(' + n + ')">一括作成</button>' +
+    '</div>' +
+    '<div class="tr-sets-header">' +
+      '<span>セット</span><span>重量 (kg)</span><span>回数</span><span>RPE</span><span></span>' +
+    '</div>' +
+    '<div class="tr-sets-list" id="tr-sets-' + n + '"></div>' +
+    '<button class="tr-add-set-btn" onclick="trAddSet(' + n + ')">＋ セット追加</button>' +
+    '<textarea class="tr-ex-memo" placeholder="フォーム・感覚メモ（任意）"></textarea>';
+
+  document.getElementById('tr-exercise-list').appendChild(card);
+  trAddSet(n);
+  trUpdateSaveBtn();
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function trRemoveExercise(n) {
+  var card = document.getElementById('tr-ex-' + n);
+  if (card) card.remove();
+  trUpdateSaveBtn();
+}
+
+function trAddSet(n) {
+  var container = document.getElementById('tr-sets-' + n);
+  var setNum = container.children.length + 1;
+  var row = document.createElement('div');
+  row.className = 'tr-set-row';
+  row.innerHTML =
+    '<span class="tr-set-num">' + setNum + '</span>' +
+    '<input type="number" class="tr-set-weight" placeholder="0.0" step="0.5" min="0">' +
+    '<input type="number" class="tr-set-reps"   placeholder="0"   step="1"   min="0">' +
+    '<input type="number" class="tr-set-rpe"    placeholder="—"   step="1"   min="1" max="10">' +
+    '<button class="tr-del-set-btn" onclick="trRemoveSet(this,' + n + ')">×</button>';
+  container.appendChild(row);
+}
+
+function trRemoveSet(btn, n) {
+  var container = document.getElementById('tr-sets-' + n);
+  if (container.children.length <= 1) return;
+  btn.parentElement.remove();
+  var rows = container.querySelectorAll('.tr-set-row');
+  for (var i = 0; i < rows.length; i++) {
+    rows[i].querySelector('.tr-set-num').textContent = i + 1;
+  }
+}
+
+function trApplySetCount(n) {
+  var countInput = document.getElementById('tr-setcount-' + n);
+  var count = parseInt(countInput.value);
+  if (!count || count < 1 || count > 20) {
+    trShowResult('info', 'セット数は1〜20の範囲で入力してください');
+    return;
+  }
+  var container = document.getElementById('tr-sets-' + n);
+  var existingRows = container.querySelectorAll('.tr-set-row');
+  var currentCount = existingRows.length;
+
+  // 1セット目の値をコピー元として保存
+  var copyWeight = '', copyReps = '', copyRpe = '';
+  if (existingRows.length > 0) {
+    var firstRow = existingRows[0];
+    copyWeight = firstRow.querySelector('.tr-set-weight').value;
+    copyReps   = firstRow.querySelector('.tr-set-reps').value;
+    copyRpe    = firstRow.querySelector('.tr-set-rpe').value;
+  }
+
+  if (count > currentCount) {
+    for (var i = currentCount; i < count; i++) {
+      trAddSet(n);
+      // 追加した行（末尾）に1セット目の値をコピー
+      var allRows = container.querySelectorAll('.tr-set-row');
+      var newRow = allRows[allRows.length - 1];
+      if (newRow) {
+        newRow.querySelector('.tr-set-weight').value = copyWeight;
+        newRow.querySelector('.tr-set-reps').value   = copyReps;
+        if (copyRpe) newRow.querySelector('.tr-set-rpe').value = copyRpe;
+      }
+    }
+  } else if (count < currentCount) {
+    var rows = container.querySelectorAll('.tr-set-row');
+    for (var i = currentCount - 1; i >= count; i--) {
+      rows[i].remove();
+    }
+    var remaining = container.querySelectorAll('.tr-set-row');
+    for (var i = 0; i < remaining.length; i++) {
+      remaining[i].querySelector('.tr-set-num').textContent = i + 1;
+    }
+  }
+}
+
+function trOnNameInput(input, n) {
+  var name = input.value.trim();
+  var match = null;
+  for (var i = 0; i < TR_EXERCISES.length; i++) {
+    if (TR_EXERCISES[i].name === name) { match = TR_EXERCISES[i]; break; }
+  }
+  var partEl   = document.getElementById('tr-ex-part-' + n);
+  var pickerEl = document.getElementById('tr-new-part-' + n);
+  if (match) {
+    partEl.textContent = '部位: ' + match.part;
+    input.dataset.part = match.part;
+    delete input.dataset.isNew;
+    if (pickerEl) pickerEl.style.display = 'none';
+  } else if (name) {
+    // 未登録の種目名: 選択済みでなければピッカーを表示
+    if (!input.dataset.isNew) {
+      partEl.textContent = '部位: —';
+      input.dataset.part = '';
+    }
+    if (pickerEl) pickerEl.style.display = 'block';
+  } else {
+    partEl.textContent = '部位: —';
+    input.dataset.part = '';
+    delete input.dataset.isNew;
+    if (pickerEl) pickerEl.style.display = 'none';
+  }
+}
+
+function trSelectPart(n, part, btn) {
+  var nameInput = document.querySelector('#tr-ex-' + n + ' .tr-ex-name');
+  if (!nameInput) return;
+  nameInput.dataset.part  = part;
+  nameInput.dataset.isNew = 'true';
+  document.getElementById('tr-ex-part-' + n).textContent = '部位: ' + part;
+  document.querySelectorAll('#tr-new-part-' + n + ' .tr-part-btn').forEach(function(b) {
+    b.classList.toggle('selected', b === btn);
+  });
+}
+
+function trUpdateSaveBtn() {
+  var hasCards = document.querySelectorAll('.tr-exercise-card').length > 0;
+  document.getElementById('tr-save-btn').disabled = !hasCards;
+}
+
+// ===== 種目マスタ編集モーダル =====
+var TR_PART_OPTIONS = ['胸','背中','肩','腕','脚','臀部','腹筋','体幹','その他'];
+
+function trMasterOpen() {
+  var listEl = document.getElementById('tr-master-list');
+  if (!listEl) return;
+  listEl.innerHTML = TR_EXERCISES.map(function(ex, idx) {
+    var partBtns = TR_PART_OPTIONS.map(function(p) {
+      return '<button type="button" class="tr-part-btn' + (ex.part === p ? ' selected' : '') +
+             '" onclick="trMasterSetPart(' + idx + ',\'' + p + '\',this)">' + p + '</button>';
+    }).join('');
+    return '<div class="tr-master-row">' +
+      '<span class="tr-master-name">' + ex.name + '</span>' +
+      '<span class="tr-master-part" id="tr-mpart-' + idx + '">' + (ex.part || '—') + '</span>' +
+      '<button class="tr-master-edit-btn" onclick="trMasterEditRow(' + idx + ')">変更</button>' +
+    '</div>' +
+    '<div class="tr-part-picker-row" id="tr-mpick-' + idx + '" style="display:none">' +
+      partBtns +
+    '</div>';
+  }).join('');
+  document.getElementById('tr-master-modal').style.display = 'flex';
+}
+
+function trMasterClose() {
+  document.getElementById('tr-master-modal').style.display = 'none';
+}
+
+function trMasterBgClick(e) {
+  if (e.target === document.getElementById('tr-master-modal')) trMasterClose();
+}
+
+function trMasterEditRow(idx) {
+  var pickEl = document.getElementById('tr-mpick-' + idx);
+  if (!pickEl) return;
+  pickEl.style.display = pickEl.style.display === 'none' ? 'flex' : 'none';
+}
+
+function trMasterSetPart(idx, part, btn) {
+  var ex = TR_EXERCISES[idx];
+  if (!ex) return;
+  TR_EXERCISES[idx].part = part;
+  var partLbl = document.getElementById('tr-mpart-' + idx);
+  if (partLbl) partLbl.textContent = part;
+  document.querySelectorAll('#tr-mpick-' + idx + ' .tr-part-btn').forEach(function(b) {
+    b.classList.toggle('selected', b === btn);
+  });
+  document.getElementById('tr-mpick-' + idx).style.display = 'none';
+  google.script.run
+    .withSuccessHandler(function() {})
+    .withFailureHandler(function() {})
+    .addOrUpdateExerciseMaster(ex.name, part);
+}
+
+// ===== Phase 7: コンディション =====
+function preSelectRating(groupId, key, value, btn) {
+  document.querySelectorAll('#' + groupId + ' .rating-btn').forEach(function(b) {
+    b.classList.remove('selected');
+  });
+  btn.classList.add('selected');
+  preSel[key] = value;
+}
+
+function preSelectChoice(groupId, key, value, btn) {
+  document.querySelectorAll('#' + groupId + ' .choice-btn').forEach(function(b) {
+    b.classList.remove('selected');
+  });
+  btn.classList.add('selected');
+  preSel[key] = value;
+}
+
+// ===== Phase 7: サプリメント =====
+function suppToggle(key, btn) {
+  suppSelected[key] = !suppSelected[key];
+  btn.classList.toggle('selected', suppSelected[key]);
+}
+
+function suppToggleOther(btn) {
+  suppSelected.other = !suppSelected.other;
+  btn.classList.toggle('selected', suppSelected.other);
+  document.getElementById('supp-other-wrap').style.display = suppSelected.other ? 'block' : 'none';
+  if (!suppSelected.other) document.getElementById('supp-other-text').value = '';
+}
+
+// ===== Phase 7: クールダウン =====
+function cooldownToggle(key, btn) {
+  cdSelected[key] = !cdSelected[key];
+  var wrapMap = { walking: 'cd-walking-wrap', running: 'cd-running-wrap', other: 'cd-other-wrap' };
+  btn.classList.toggle('selected', cdSelected[key]);
+  if (wrapMap[key]) {
+    document.getElementById(wrapMap[key]).style.display = cdSelected[key] ? 'block' : 'none';
+    if (!cdSelected[key]) {
+      var inp = document.getElementById(
+        key === 'walking' ? 'cd-walking-min' :
+        key === 'running' ? 'cd-running-min' : 'cd-other-text'
+      );
+      if (inp) inp.value = '';
+    }
+  }
+}
+
+// ===== 保存処理 =====
+function trSave() {
+  var date = document.getElementById('tr-date').value;
+  if (!date) { trShowResult('error', '日付を入力してください'); return; }
+
+  var exercises    = [];
+  var newExercises = []; // 種目マスタへ新規登録する {name, part}
+  var cards = document.querySelectorAll('.tr-exercise-card');
+  for (var i = 0; i < cards.length; i++) {
+    var card = cards[i];
+    var nameInput = card.querySelector('.tr-ex-name');
+    var name = nameInput.value.trim();
+    if (!name) {
+      trShowResult('error', '種目名が未入力の種目があります');
+      nameInput.focus();
+      return;
+    }
+    var sets = [];
+    var setRows = card.querySelectorAll('.tr-set-row');
+    for (var j = 0; j < setRows.length; j++) {
+      var row = setRows[j];
+      sets.push({
+        weight: row.querySelector('.tr-set-weight').value,
+        reps:   row.querySelector('.tr-set-reps').value,
+        rpe:    row.querySelector('.tr-set-rpe').value
+      });
+    }
+    var part = nameInput.dataset.part || '';
+    exercises.push({
+      name:     name,
+      bodyPart: part,
+      sets:     sets,
+      memo:     card.querySelector('.tr-ex-memo').value
+    });
+    // 新種目として部位が選択されていれば登録キューに追加
+    if (nameInput.dataset.isNew === 'true' && part) {
+      newExercises.push({ name: name, part: part });
+    }
+  }
+
+  var suppList = [];
+  if (suppSelected.BCAA)     suppList.push('BCAA');
+  if (suppSelected.EAA)      suppList.push('EAA');
+  if (suppSelected.creatine) suppList.push('クレアチン');
+  if (suppSelected.protein)  suppList.push('プロテイン');
+  if (suppSelected.other) {
+    var suppOther = document.getElementById('supp-other-text').value.trim();
+    if (suppOther) suppList.push('その他:' + suppOther);
+  }
+
+  var cdList = [];
+  if (cdSelected.stretch) cdList.push('ストレッチ');
+  if (cdSelected.walking) {
+    var walkMin = document.getElementById('cd-walking-min').value;
+    cdList.push(walkMin ? 'ウォーキング:' + walkMin + '分' : 'ウォーキング');
+  }
+  if (cdSelected.running) {
+    var runMin = document.getElementById('cd-running-min').value;
+    cdList.push(runMin ? 'ランニング:' + runMin + '分' : 'ランニング');
+  }
+  if (cdSelected.other) {
+    var cdOther = document.getElementById('cd-other-text').value.trim();
+    if (cdOther) cdList.push('その他:' + cdOther);
+  }
+
+  var data = {
+    date:      date,
+    startTime: document.getElementById('tr-start-time').value,
+    exercises: exercises,
+    preCondition: {
+      fatigue:      preSel.fatigue      !== null ? String(preSel.fatigue)      : '',
+      soreness:     preSel.soreness     !== null ? String(preSel.soreness)     : '',
+      condition:    preSel.condition    !== null ? String(preSel.condition)    : '',
+      memo:         document.getElementById('pre-memo').value || ''
+    },
+    supplements: suppList.join('、'),
+    cooldown:    cdList.join('、')
+  };
+
+  var btn = document.getElementById('tr-save-btn');
+  btn.textContent = '保存中…';
+  btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      if (res && res.success) {
+        // 新種目を種目マスタへ登録（fire-and-forget）
+        newExercises.forEach(function(newEx) {
+          if (!TR_EXERCISES.some(function(e) { return e.name === newEx.name; })) {
+            TR_EXERCISES.push({ name: newEx.name, part: newEx.part });
+            updateExerciseDatalist();
+          }
+          google.script.run
+            .withSuccessHandler(function() {})
+            .withFailureHandler(function() {})
+            .addOrUpdateExerciseMaster(newEx.name, newEx.part);
+        });
+        trShowResult('success', '筋トレを記録しました！');
+        trHistLoaded = false;
+        trReset();
+      } else {
+        var detail = res ? (res.error || JSON.stringify(res)) : '不明';
+        trShowResult('error', 'GASエラー: ' + detail);
+        console.error('[saveTrainingData GASエラー]', res);
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      var msg = '不明なエラー';
+      try {
+        if (typeof err === 'string') { msg = err; }
+        else if (err && err.message) { msg = err.message; }
+        else if (err) { msg = JSON.stringify(err); }
+      } catch(e2) { msg = String(err); }
+      trShowResult('error', '通信エラー: ' + msg);
+      console.error('[saveTrainingData 通信エラー]', err);
+    })
+    .saveTrainingData(data);
+}
+
+function trReset() {
+  document.getElementById('tr-exercise-list').innerHTML = '';
+  trExCount = 0;
+  trUpdateSaveBtn();
+
+  var now = new Date();
+  document.getElementById('tr-date').value =
+    now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0');
+  document.getElementById('tr-start-time').value =
+    String(now.getHours()).padStart(2, '0') + ':' +
+    String(now.getMinutes()).padStart(2, '0');
+
+  preSel = { sleepQuality: null, fatigue: null, soreness: null, condition: null };
+  document.getElementById('pre-memo').value = '';
+  ['pre-rating-fatigue', 'pre-rating-soreness'].forEach(function(id) {
+    document.querySelectorAll('#' + id + ' .rating-btn').forEach(function(b) { b.classList.remove('selected'); });
+  });
+  document.querySelectorAll('#pre-choice-condition .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+
+  suppSelected = { BCAA: false, EAA: false, creatine: false, protein: false, other: false };
+  document.querySelectorAll('#supp-buttons .supp-btn').forEach(function(b) { b.classList.remove('selected'); });
+  document.getElementById('supp-other-wrap').style.display = 'none';
+  document.getElementById('supp-other-text').value = '';
+
+  cdSelected = { stretch: false, walking: false, running: false, other: false };
+  document.querySelectorAll('#cd-buttons .supp-btn').forEach(function(b) { b.classList.remove('selected'); });
+  ['cd-walking-wrap', 'cd-running-wrap', 'cd-other-wrap'].forEach(function(id) {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('cd-walking-min').value = '';
+  document.getElementById('cd-running-min').value = '';
+  document.getElementById('cd-other-text').value = '';
+}
+
+function trShowResult(type, message) {
+  var el = document.getElementById('training-result');
+  el.className = 'save-result ' + type;
+  el.textContent = message;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ===== 履歴タブ =====
+function trLoadHistory() {
+  if (trHistLoaded) {
+    trRenderHistory(trHistSessions);
+    return;
+  }
+  document.getElementById('tr-hist-list').innerHTML =
+    '<div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      trHistLoaded = true;
+      if (res && res.success) trHistSessions = res.sessions;
+      trRenderHistory(trHistSessions);
+    })
+    .withFailureHandler(function() {
+      document.getElementById('tr-hist-list').innerHTML =
+        '<div style="text-align:center;padding:32px;color:#C62828">読み込みに失敗しました</div>';
+    })
+    .getTrainingHistory();
+}
+
+function trRenderHistory(sessions) {
+  var list = document.getElementById('tr-hist-list');
+  if (!sessions || sessions.length === 0) {
+    list.innerHTML =
+      '<div class="placeholder-card" style="margin-top:0">' +
+      '<div class="icon">🏋️</div>' +
+      '<div class="title">記録がありません</div>' +
+      '<div class="desc">「記録する」タブから<br>トレーニングを記録しましょう</div>' +
+      '</div>';
+    return;
+  }
+
+  var html = '';
+  sessions.forEach(function(session, si) {
+    var dateLabel  = session.date.replace(/-/g, '/');
+    var exNames    = session.exercises.map(function(e) { return e.name; }).join(' · ');
+    var totalSets  = session.exercises.reduce(function(sum, e) { return sum + (e.totalSets || 0); }, 0);
+
+    html += '<div class="tr-hist-card">';
+    html += '<div class="tr-hist-header" onclick="trHistToggle(' + si + ')">';
+    html += '<div style="min-width:0;flex:1">';
+    html += '<div class="tr-hist-date">' + dateLabel + '</div>';
+    html += '<div class="tr-hist-summary">' + trEscape(exNames) + '</div>';
+    html += '<div class="tr-hist-meta">' + session.exercises.length + '種目・' + totalSets + 'セット</div>';
+    html += '</div>';
+    html += '<button class="edit-hist-btn" onclick="event.stopPropagation();trEditOpen(' + si + ')">編集</button>';
+    html += '<button class="tr-del-ex-hist-btn" onclick="event.stopPropagation();trDeleteSessionOpen(' + si + ')">削除</button>';
+    html += '<span class="tr-hist-arrow" id="tr-hist-arrow-' + si + '" style="margin-left:8px">▶</span>';
+    html += '</div>';
+
+    html += '<div id="tr-hist-detail-' + si + '" class="tr-hist-detail">';
+    session.exercises.forEach(function(ex) {
+      var exIdJ   = JSON.stringify(String(ex.id   || ''));
+      var exNameJ = JSON.stringify(String(ex.name || ''));
+      html += '<div class="tr-hist-exercise">';
+      html += '<div class="tr-hist-ex-name">' + trEscape(ex.name);
+      if (ex.bodyPart) html += ' <span class="tr-hist-part">(' + trEscape(ex.bodyPart) + ')</span>';
+      html += '</div>';
+
+      if (ex.sets && ex.sets.length > 0) {
+        html += '<table class="tr-hist-sets-table">';
+        html += '<thead><tr><th>セット</th><th>重量</th><th>回数</th><th>RPE</th></tr></thead><tbody>';
+        ex.sets.forEach(function(s) {
+          html += '<tr>';
+          html += '<td>' + (s.setNum || '—') + '</td>';
+          html += '<td>' + (s.weight ? s.weight + 'kg' : '—') + '</td>';
+          html += '<td>' + (s.reps   || '—') + '</td>';
+          html += '<td>' + (s.rpe    || '—') + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+      } else {
+        html += '<div style="font-size:13px;color:var(--text-sub);padding:4px 0">';
+        html += (ex.totalSets || 0) + 'セット';
+        if (ex.maxWeight) html += '・最大 ' + ex.maxWeight + 'kg';
+        if (ex.maxRpe)    html += '・RPE ' + ex.maxRpe;
+        html += '</div>';
+      }
+
+      if (ex.memo) {
+        html += '<div style="font-size:12px;color:var(--text-sub);margin-top:6px">' + trEscape(ex.memo) + '</div>';
+      }
+      // 種目単位の編集・削除ボタン
+      html += '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">';
+      html += '<button class="edit-hist-btn" onclick="event.stopPropagation();trEditOpen(' + si + ')">編集</button>';
+      if (ex.id) {
+        html += '<button class="tr-del-ex-hist-btn" onclick="event.stopPropagation();trDeleteExOpen(' + exIdJ + ',' + exNameJ + ',' + si + ')">削除</button>';
+      }
+      html += '</div>';
+      html += '</div>';
+    });
+
+    // トレ前コンディション表示（Phase7で保存されたデータ）
+    if (session.preCondition) {
+      var pre = session.preCondition;
+      var preItems = [];
+      if (pre.sleepHours)   preItems.push(['睡眠', pre.sleepHours + '時間']);
+      if (pre.sleepQuality) preItems.push(['睡眠の質', pre.sleepQuality + '/5']);
+      if (pre.fatigue)      preItems.push(['疲労度', pre.fatigue + '/5']);
+      if (pre.soreness)     preItems.push(['筋肉痛', pre.soreness + '/5']);
+      if (pre.condition)    preItems.push(['体調', pre.condition]);
+      if (pre.supplements)  preItems.push(['サプリ', pre.supplements]);
+      if (pre.cooldown)     preItems.push(['クールダウン', pre.cooldown]);
+
+      if (preItems.length > 0) {
+        html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
+        html += '<div style="font-size:12px;color:var(--text-sub);margin-bottom:6px">🌙 トレーニング前コンディション</div>';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+        preItems.forEach(function(item) {
+          html += '<div style="background:#EEF4FB;border-radius:8px;padding:4px 10px;font-size:12px">';
+          html += '<span style="color:var(--text-sub)">' + item[0] + ': </span>';
+          html += '<span style="font-weight:600">' + trEscape(String(item[1])) + '</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+        if (pre.memo) {
+          html += '<div style="font-size:12px;color:var(--text-sub);margin-top:6px">' + trEscape(pre.memo) + '</div>';
+        }
+        html += '</div>';
+      }
+    }
+
+    html += '</div>'; // tr-hist-detail
+    html += '</div>'; // tr-hist-card
+  });
+
+  list.innerHTML = html;
+}
+
+function trHistToggle(si) {
+  var detail = document.getElementById('tr-hist-detail-' + si);
+  var arrow  = document.getElementById('tr-hist-arrow-' + si);
+  var isOpen = detail.style.display === 'block';
+  detail.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent    = isOpen ? '▶' : '▼';
+}
+
+function trEscape(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ===== 筋トレ履歴 編集 =====
+var _trEditSessionIdx = -1;
+
+function trEditOpen(si) {
+  var sess = trHistSessions[si];
+  if (!sess) return;
+  _trEditSessionIdx = si;
+
+  var html = '<div class="form-section">'
+    + '<div class="form-section-title">📅 日付</div>'
+    + '<input type="date" id="tr-edit-date" class="form-input" style="width:100%;font-size:16px" value="' + sess.date + '">'
+    + '</div>';
+
+  html += '<div id="tr-edit-exercises">';
+  sess.exercises.forEach(function(ex, ei) {
+    html += '<div class="edit-exercise-block" data-ei="' + ei + '">'
+      + '<div class="edit-exercise-title">種目 ' + (ei + 1) + '</div>'
+      + '<input type="hidden" class="tr-edit-exid" value="' + trEscape(ex.id) + '">'
+      + '<div class="form-row"><label class="form-label">種目名</label>'
+      + '<input type="text" list="exercise-datalist" class="tr-edit-exname form-input" value="' + trEscape(ex.name) + '"></div>'
+      + '<div class="form-row"><label class="form-label">部位</label>'
+      + '<input type="text" class="tr-edit-expart form-input" value="' + trEscape(ex.bodyPart) + '"></div>'
+      + '<div class="edit-sets-label">セット</div>'
+      + '<div class="tr-setcount-row">'
+      + '<span class="tr-setcount-lbl">セット数</span>'
+      + '<input type="number" id="tr-edit-setcount-' + ei + '" class="tr-setcount-inp" placeholder="例: 3" min="1" max="20" step="1">'
+      + '<button type="button" class="tr-setcount-btn" onclick="trEditApplySetCount(' + ei + ')">一括作成</button>'
+      + '</div>'
+      + '<div class="edit-sets-header"><span>No.</span><span>重量(kg)</span><span>回数</span><span>RPE</span><span></span></div>'
+      + '<div class="tr-sets-list" id="tr-edit-sets-' + ei + '">';
+    var setsData = (ex.sets && ex.sets.length > 0) ? ex.sets : [];
+    setsData.forEach(function(s, si2) {
+      html += trEditSetRowHtml(si2, s.weight, s.reps, s.rpe);
+    });
+    if (setsData.length === 0) {
+      html += trEditSetRowHtml(0, '', '', '');
+    }
+    html += '</div>'
+      + '<button type="button" class="tr-add-set-btn" onclick="trEditAddSet(' + ei + ')">＋ セット追加</button>'
+      + '<div class="form-row" style="margin-top:8px"><label class="form-label">メモ</label>'
+      + '<input type="text" class="tr-edit-exmemo form-input" value="' + trEscape(ex.memo) + '"></div>'
+      + '</div>';
+  });
+  html += '</div>';
+
+  document.getElementById('tr-edit-form').innerHTML = html;
+  var res = document.getElementById('tr-edit-result');
+  res.className = 'edit-result';
+  res.textContent = '';
+  document.getElementById('tr-edit-modal').style.display = 'flex';
+}
+
+function trEditSetRowHtml(si, weight, reps, rpe) {
+  return '<div class="tr-set-row">'
+    + '<span class="tr-set-num">' + (si + 1) + '</span>'
+    + '<input type="number" class="tr-set-weight" placeholder="kg" value="' + (weight || '') + '" step="0.5" min="0">'
+    + '<input type="number" class="tr-set-reps" placeholder="回" value="' + (reps || '') + '" step="1" min="0">'
+    + '<input type="number" class="tr-set-rpe" placeholder="RPE" value="' + (rpe || '') + '" step="0.5" min="1" max="10">'
+    + '<button type="button" class="tr-del-set-btn" onclick="trEditDelSet(this)">×</button>'
+    + '</div>';
+}
+
+function trEditAddSet(ei) {
+  var container = document.getElementById('tr-edit-sets-' + ei);
+  if (!container) return;
+  var count = container.querySelectorAll('.tr-set-row').length;
+  var div = document.createElement('div');
+  div.innerHTML = trEditSetRowHtml(count, '', '', '');
+  container.appendChild(div.firstChild);
+  trEditRenumberSets(container);
+}
+
+function trEditApplySetCount(ei) {
+  var countInput = document.getElementById('tr-edit-setcount-' + ei);
+  if (!countInput) return;
+  var count = parseInt(countInput.value);
+  if (!count || count < 1 || count > 20) {
+    _trEditShowResult('error', 'セット数は1〜20の範囲で入力してください');
+    return;
+  }
+  var container = document.getElementById('tr-edit-sets-' + ei);
+  if (!container) return;
+  var existingRows = container.querySelectorAll('.tr-set-row');
+  var currentCount = existingRows.length;
+
+  var copyWeight = '', copyReps = '', copyRpe = '';
+  if (existingRows.length > 0) {
+    var firstRow = existingRows[0];
+    copyWeight = firstRow.querySelector('.tr-set-weight').value;
+    copyReps   = firstRow.querySelector('.tr-set-reps').value;
+    copyRpe    = firstRow.querySelector('.tr-set-rpe').value;
+  }
+
+  if (count > currentCount) {
+    for (var i = currentCount; i < count; i++) {
+      var div = document.createElement('div');
+      div.innerHTML = trEditSetRowHtml(container.querySelectorAll('.tr-set-row').length, copyWeight, copyReps, copyRpe);
+      container.appendChild(div.firstChild);
+    }
+    trEditRenumberSets(container);
+  } else if (count < currentCount) {
+    var rows = container.querySelectorAll('.tr-set-row');
+    for (var i = currentCount - 1; i >= count; i--) {
+      rows[i].remove();
+    }
+    trEditRenumberSets(container);
+  }
+}
+
+function trEditDelSet(btn) {
+  var row = btn.closest('.tr-set-row');
+  if (!row) return;
+  var container = row.parentElement;
+  if (container.querySelectorAll('.tr-set-row').length <= 1) return; // 最低1セット
+  row.remove();
+  trEditRenumberSets(container);
+}
+
+function trEditRenumberSets(container) {
+  container.querySelectorAll('.tr-set-row').forEach(function(row, i) {
+    var num = row.querySelector('.tr-set-num');
+    if (num) num.textContent = i + 1;
+  });
+}
+
+function trEditClose() {
+  document.getElementById('tr-edit-modal').style.display = 'none';
+  _trEditSessionIdx = -1;
+}
+
+function trEditBgClick(e) {
+  if (e.target === document.getElementById('tr-edit-modal')) trEditClose();
+}
+
+function trEditSave() {
+  var date = document.getElementById('tr-edit-date').value;
+  if (!date) { _trEditShowResult('error', '日付を入力してください'); return; }
+
+  var exercises = [];
+  document.querySelectorAll('#tr-edit-exercises .edit-exercise-block').forEach(function(block) {
+    var id       = block.querySelector('.tr-edit-exid').value;
+    var name     = block.querySelector('.tr-edit-exname').value.trim();
+    var part     = block.querySelector('.tr-edit-expart').value.trim();
+    var memo     = block.querySelector('.tr-edit-exmemo').value;
+    var sets     = [];
+    block.querySelectorAll('.tr-set-row').forEach(function(row) {
+      sets.push({
+        weight: row.querySelector('.tr-set-weight').value,
+        reps:   row.querySelector('.tr-set-reps').value,
+        rpe:    row.querySelector('.tr-set-rpe').value
+      });
+    });
+    if (name) exercises.push({ id: id, name: name, bodyPart: part, sets: sets, memo: memo });
+  });
+
+  if (exercises.length === 0) { _trEditShowResult('error', '種目名を入力してください'); return; }
+
+  var btn    = document.getElementById('tr-edit-save-btn');
+  var btnTop = document.getElementById('tr-edit-save-btn-top');
+  function _setEditBtns(label, disabled) {
+    btn.textContent = label; btn.disabled = disabled;
+    if (btnTop) { btnTop.textContent = label; btnTop.disabled = disabled; }
+  }
+  _setEditBtns('変更中…', true);
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      _setEditBtns('変更を保存', false);
+      if (res && res.success) {
+        trHistLoaded = false;
+        if (typeof _aiTrainSessions !== 'undefined') { _aiTrainSessions = null; _aiCondRecs = null; _aiMealRecs3 = null; _aiMasterMap = null; }
+        trEditClose();
+        trLoadHistory();
+        if (typeof homeRefresh === 'function') homeRefresh();
+        if (typeof showToast === 'function') showToast('✓ 変更しました', 'success');
+      } else {
+        console.error('updateTrainingSession error:', res ? res.error : '不明');
+        _trEditShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+      }
+    })
+    .withFailureHandler(function(err) {
+      _setEditBtns('変更を保存', false);
+      console.error('updateTrainingSession failure:', err);
+      _trEditShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+    })
+    .updateTrainingSession({ date: date, exercises: exercises });
+}
+
+function _trEditShowResult(type, msg) {
+  var el = document.getElementById('tr-edit-result');
+  el.className = 'edit-result ' + type;
+  el.textContent = msg;
+}
+
+// ===== 筋トレ種目 削除 =====
+var _trDelExId = null;
+var _trDelSessionIdx = -1;
+var _trDelSessionExIds = [];
+var _trDelIsSession = false;
+
+function trDeleteExOpen(exId, exName, si) {
+  _trDelExId = exId;
+  _trDelIsSession = false;
+  document.getElementById('tr-del-confirm-name').textContent = exName;
+  var btn = document.getElementById('tr-del-exec-btn');
+  if (btn) { btn.textContent = '削除する'; btn.disabled = false; }
+  document.getElementById('tr-del-confirm-modal').style.display = 'flex';
+}
+
+function trDeleteSessionOpen(si) {
+  var sess = trHistSessions[si];
+  if (!sess) return;
+  _trDelSessionIdx = si;
+  _trDelSessionExIds = sess.exercises.map(function(ex) { return ex.id; }).filter(function(id) { return id; });
+  _trDelIsSession = true;
+  var dateLabel = sess.date.replace(/-/g, '/');
+  document.getElementById('tr-del-confirm-name').textContent = dateLabel + ' のトレーニング記録（' + sess.exercises.length + '種目）';
+  var btn = document.getElementById('tr-del-exec-btn');
+  if (btn) { btn.textContent = '削除する'; btn.disabled = false; }
+  document.getElementById('tr-del-confirm-modal').style.display = 'flex';
+}
+
+function trDeleteExClose() {
+  document.getElementById('tr-del-confirm-modal').style.display = 'none';
+  _trDelExId = null;
+  _trDelSessionIdx = -1;
+  _trDelSessionExIds = [];
+  _trDelIsSession = false;
+}
+
+function trDeleteExConfirm() {
+  var btn = document.getElementById('tr-del-exec-btn');
+  if (_trDelIsSession) {
+    if (_trDelSessionExIds.length === 0) { trDeleteExClose(); return; }
+    var ids = _trDelSessionExIds.slice();
+    if (btn) { btn.textContent = '削除中…'; btn.disabled = true; }
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (btn) { btn.textContent = '削除する'; btn.disabled = false; }
+        trDeleteExClose();
+        if (res && res.success) {
+          trHistLoaded = false;
+          if (typeof _aiTrainSessions !== 'undefined') { _aiTrainSessions = null; _aiCondRecs = null; _aiMealRecs3 = null; _aiMasterMap = null; }
+          trLoadHistory();
+          if (typeof homeRefresh === 'function') homeRefresh();
+          if (typeof showToast === 'function') showToast('✓ 削除しました', 'success');
+        } else {
+          console.error('deleteTrainingSession error:', res ? res.error : '不明');
+          if (typeof showToast === 'function') showToast('削除できませんでした。もう一度お試しください。', 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        if (btn) { btn.textContent = '削除する'; btn.disabled = false; }
+        trDeleteExClose();
+        console.error('deleteTrainingSession failure:', err);
+        if (typeof showToast === 'function') showToast('削除できませんでした。もう一度お試しください。', 'error');
+      })
+      .deleteTrainingSession(ids);
+  } else {
+    if (!_trDelExId) return;
+    if (btn) { btn.textContent = '削除中…'; btn.disabled = true; }
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (btn) { btn.textContent = '削除する'; btn.disabled = false; }
+        trDeleteExClose();
+        if (res && res.success) {
+          trHistLoaded = false;
+          if (typeof _aiTrainSessions !== 'undefined') { _aiTrainSessions = null; _aiCondRecs = null; _aiMealRecs3 = null; _aiMasterMap = null; }
+          trLoadHistory();
+          if (typeof homeRefresh === 'function') homeRefresh();
+          if (typeof showToast === 'function') showToast('✓ 削除しました', 'success');
+        } else {
+          console.error('deleteTrainingExercise error:', res ? res.error : '不明');
+          if (typeof showToast === 'function') showToast('削除できませんでした。もう一度お試しください。', 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        if (btn) { btn.textContent = '削除する'; btn.disabled = false; }
+        trDeleteExClose();
+        console.error('deleteTrainingExercise failure:', err);
+        if (typeof showToast === 'function') showToast('削除できませんでした。もう一度お試しください。', 'error');
+      })
+      .deleteTrainingExercise(_trDelExId);
+  }
+}
+</script>

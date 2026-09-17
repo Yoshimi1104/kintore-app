@@ -1,0 +1,1356 @@
+<!-- PageAI.html — AI分析 STEP1: MY BODY REPORT -->
+
+<div class="ai-page-wrap">
+
+  <!-- ローディング -->
+  <div id="ai-loading" style="text-align:center;padding:60px 16px;color:var(--text-sub)">
+    <div style="font-size:36px;margin-bottom:12px">📊</div>
+    <div>データを読み込み中...</div>
+  </div>
+
+  <!-- エラー（Chart.js読み込み失敗など） -->
+  <div id="ai-error" class="save-result error" style="display:none;margin-bottom:12px"></div>
+
+  <!-- メインコンテンツ（ロード完了後に表示） -->
+  <div id="ai-content" style="display:none">
+
+    <!-- レポートヘッダー -->
+    <div class="ai-report-header">
+      <div class="ai-report-title">MY BODY REPORT</div>
+    </div>
+
+    <!-- 期間切替バー -->
+    <div class="ai-period-bar">
+      <button class="ai-period-btn" onclick="aiSetPeriod(7, this)">7日</button>
+      <button class="ai-period-btn active" onclick="aiSetPeriod(30, this)">1か月</button>
+      <button class="ai-period-btn" onclick="aiSetPeriod(90, this)">3か月</button>
+      <button class="ai-period-btn" onclick="aiSetPeriod(180, this)">6か月</button>
+      <button class="ai-period-btn" onclick="aiSetPeriod(0, this)">全期間</button>
+    </div>
+
+    <!-- 身体の変化 -->
+    <div class="card ai-section-card">
+      <div class="ai-section-title">身体の変化</div>
+      <div class="ai-metric-bar">
+        <button class="ai-body-metric-btn active" onclick="aiSetBodyMetric('weight', this)">体重</button>
+        <button class="ai-body-metric-btn" onclick="aiSetBodyMetric('chest',  this)">胸囲</button>
+        <button class="ai-body-metric-btn" onclick="aiSetBodyMetric('waist',  this)">ウエスト</button>
+        <button class="ai-body-metric-btn" onclick="aiSetBodyMetric('hip',    this)">ヒップ</button>
+        <button class="ai-body-metric-btn" onclick="aiSetBodyMetric('thigh',  this)">太もも</button>
+      </div>
+      <div class="ai-chart-wrap">
+        <canvas id="ai-body-chart"></canvas>
+      </div>
+      <div id="ai-body-stats"></div>
+    </div>
+
+    <!-- 筋トレの成長 -->
+    <div class="card ai-section-card">
+      <div class="ai-section-title">筋トレの成長</div>
+      <div class="ai-ex-select-row">
+        <span class="ai-ex-select-label">種目</span>
+        <select id="ai-exercise-select" class="ai-ex-select" onchange="aiOnExerciseChange(this)">
+          <option value="">（読み込み中）</option>
+        </select>
+      </div>
+      <div class="ai-metric-bar">
+        <button class="ai-tr-metric-btn active" onclick="aiSetTrMetric('weight', this)">重量</button>
+        <button class="ai-tr-metric-btn" onclick="aiSetTrMetric('reps',   this)">回数</button>
+        <button class="ai-tr-metric-btn" onclick="aiSetTrMetric('volume', this)">総ボリューム</button>
+        <button class="ai-tr-metric-btn" onclick="aiSetTrMetric('rpe',    this)">RPE</button>
+      </div>
+      <div class="ai-chart-wrap">
+        <canvas id="ai-tr-chart"></canvas>
+      </div>
+      <div id="ai-tr-stats"></div>
+    </div>
+
+    <!-- STEP3: 部位別トレーニング分析 -->
+    <div class="card ai-section-card" id="ai-s3-bp-card">
+      <div class="ai-section-title">部位別トレーニング</div>
+      <div class="ai-metric-bar">
+        <button class="ai-tr-metric-btn active" id="ai-bp-vol-btn"  onclick="aiSetBpMetric('volume',this)">ボリューム</button>
+        <button class="ai-tr-metric-btn" id="ai-bp-sets-btn" onclick="aiSetBpMetric('sets',this)">セット数</button>
+        <button class="ai-tr-metric-btn" id="ai-bp-reps-btn" onclick="aiSetBpMetric('reps',this)">回数</button>
+      </div>
+      <div class="s3-bp-chart-wrap" id="ai-bp-chart-wrap" style="display:none">
+        <canvas id="ai-bp-chart"></canvas>
+      </div>
+      <div id="ai-bp-stats"><div class="ai-no-data">読み込み中…</div></div>
+    </div>
+
+    <!-- STEP3: コンディションとの関連性 -->
+    <div class="card ai-section-card">
+      <div class="ai-section-title">コンディションとの関連性</div>
+      <div id="ai-s3-cond-body"><div class="ai-no-data">読み込み中…</div></div>
+    </div>
+
+    <!-- STEP3: 食事との関連性 -->
+    <div class="card ai-section-card">
+      <div class="ai-section-title">食事との関連性</div>
+      <div id="ai-s3-meal-body"><div class="ai-no-data">読み込み中…</div></div>
+    </div>
+
+  </div><!-- /#ai-content -->
+</div><!-- /.ai-page-wrap -->
+
+<script>
+// ===== AI分析 STEP1 =====
+
+// --- 状態変数 ---
+var _aiBodyRecords   = null;  // getBodyHistory() のキャッシュ（null=未取得）
+var _aiTrainSessions = null;  // getTrainingHistory() のキャッシュ
+var _aiPeriodDays    = 30;    // 選択中の期間（0=全期間）
+var _aiBodyMetric    = 'weight'; // 選択中の身体指標キー
+var _aiExerciseName  = null;  // 選択中の種目名
+var _aiTrMetric      = 'weight'; // 選択中のトレ指標
+var _aiBodyChart     = null;  // Chart.js インスタンス（身体）
+var _aiTrChart       = null;  // Chart.js インスタンス（筋トレ）
+
+// STEP3 追加状態
+var _aiCondRecs      = null;  // 体調記録キャッシュ
+var _aiMealRecs3     = null;  // 食事記録キャッシュ（STEP3用）
+var _aiMasterMap     = null;  // 種目マスタ { name: part } — 部位未設定レコードの補完用
+var _aiPerfMap       = null;  // パフォーマンス指数マップ { date: % } ※全期間・初回計算後キャッシュ
+var _aiBpMetric      = 'volume'; // 部位別表示指標 'volume'|'sets'|'reps'
+var _aiBpChart       = null;  // 部位別棒グラフ Chart.js インスタンス
+var _s3ScatChart     = null;  // 散布図 Chart.js インスタンス
+var _s3SlpPairs      = null;  // 睡眠×パフォーマンスのペア（遅延描画用）
+var _s3SlpDone       = false; // 睡眠散布図レンダリング完了フラグ
+
+// 身体項目の定義（saveBodyData / getBodyHistory に合わせたキー）
+var AI_BODY_METRICS = [
+  { key: 'weight', label: '体重',    unit: 'kg' },
+  { key: 'chest',  label: '胸囲',    unit: 'cm' },
+  { key: 'waist',  label: 'ウエスト', unit: 'cm' },
+  { key: 'hip',    label: 'ヒップ',   unit: 'cm' },
+  { key: 'thigh',  label: '太もも',   unit: 'cm' }
+];
+
+// ===== 初期化 =====
+
+function aiInit() {
+  // 全データ取得済みなら再描画のみ
+  if (_aiBodyRecords !== null && _aiTrainSessions !== null &&
+      _aiCondRecs !== null && _aiMealRecs3 !== null && _aiMasterMap !== null) {
+    aiShowContent();
+    aiRender();
+    return;
+  }
+  aiShowLoading();
+  _aiLoadChartJs(function() {
+    // ① 身体データ
+    google.script.run
+      .withSuccessHandler(function(bodyRes) {
+        _aiBodyRecords = (bodyRes && bodyRes.success) ? bodyRes.records : [];
+        // ② トレーニング履歴
+        google.script.run
+          .withSuccessHandler(function(trainRes) {
+            _aiTrainSessions = (trainRes && trainRes.success) ? trainRes.sessions : [];
+            _aiPerfMap = null; // セッション更新時はパフォーマンス指数キャッシュをクリア
+            // ③ STEP3用: 体調 + 食事を一括取得
+            google.script.run
+              .withSuccessHandler(function(s3Res) {
+                _aiCondRecs  = (s3Res && s3Res.conditions) ? s3Res.conditions : [];
+                _aiMealRecs3 = (s3Res && s3Res.meals)      ? s3Res.meals      : [];
+                _aiMasterMap = {};
+                (s3Res && s3Res.exercises ? s3Res.exercises : []).forEach(function(ex) {
+                  if (ex.name && ex.part) _aiMasterMap[ex.name] = ex.part;
+                });
+                aiShowContent();
+                _aiPopulateExerciseSelector();
+                aiRender();
+              })
+              .withFailureHandler(function() {
+                _aiCondRecs  = [];
+                _aiMealRecs3 = [];
+                _aiMasterMap = {};
+                aiShowContent();
+                _aiPopulateExerciseSelector();
+                aiRender();
+              })
+              .getStep3Bundle();
+          })
+          .withFailureHandler(function() {
+            _aiTrainSessions = [];
+            _aiCondRecs      = [];
+            _aiMealRecs3     = [];
+            _aiMasterMap     = {};
+            aiShowContent();
+            _aiPopulateExerciseSelector();
+            aiRender();
+          })
+          .getTrainingHistory();
+      })
+      .withFailureHandler(function() {
+        _aiBodyRecords   = [];
+        _aiTrainSessions = [];
+        _aiCondRecs      = [];
+        _aiMealRecs3     = [];
+        _aiMasterMap     = {};
+        aiShowContent();
+        _aiPopulateExerciseSelector();
+        aiRender();
+      })
+      .getBodyHistory();
+  });
+}
+
+function _aiLoadChartJs(cb) {
+  if (window.Chart) { cb(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+  s.onload = function() { cb(); };
+  s.onerror = function() {
+    document.getElementById('ai-error').style.display = 'block';
+    document.getElementById('ai-error').textContent =
+      'グラフライブラリの読み込みに失敗しました。ネットワーク接続を確認してください。';
+    aiShowContent();
+    _aiPopulateExerciseSelector();
+    aiRender();
+  };
+  document.head.appendChild(s);
+}
+
+function aiShowLoading() {
+  document.getElementById('ai-loading').style.display = 'block';
+  document.getElementById('ai-content').style.display = 'none';
+}
+
+function aiShowContent() {
+  document.getElementById('ai-loading').style.display = 'none';
+  document.getElementById('ai-content').style.display = 'block';
+}
+
+// ===== 全体再描画 =====
+
+function aiRender() {
+  aiRenderBody();
+  aiRenderTrChart();
+  // STEP3: データが揃っていれば相関分析セクションを描画
+  if (_aiCondRecs !== null && _aiMealRecs3 !== null) {
+    // 期間変更時は散布図インスタンスをリセット
+    _s3SlpPairs = null;
+    _s3SlpDone  = false;
+    _aiDestroyChart('scat');
+    aiRenderBodyPart();
+    aiRenderCondition();
+    aiRenderMeal();
+  }
+}
+
+// ===== 期間切替 =====
+
+function aiSetPeriod(days, btn) {
+  _aiPeriodDays = days;
+  document.querySelectorAll('.ai-period-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  aiRender();
+}
+
+// 今日から days 日前の日付文字列（yyyy-MM-dd）を返す。days=0 なら null（全期間）
+function _aiGetStartDate(days) {
+  if (!days) return null;
+  var d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - days + 1);
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+function _aiFilterByPeriod(records) {
+  if (!_aiPeriodDays) return records;
+  var startDate = _aiGetStartDate(_aiPeriodDays);
+  return records.filter(function(r) { return r.date >= startDate; });
+}
+
+// ===== 身体グラフ =====
+
+function aiSetBodyMetric(metric, btn) {
+  _aiBodyMetric = metric;
+  document.querySelectorAll('.ai-body-metric-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  aiRenderBody();
+}
+
+function aiRenderBody() {
+  var metaDef = AI_BODY_METRICS.find(function(m) { return m.key === _aiBodyMetric; });
+  if (!metaDef) return;
+
+  var allRecs  = _aiBodyRecords || [];
+  var filtered = _aiFilterByPeriod(allRecs)
+    .slice()
+    .sort(function(a, b) { return a.date.localeCompare(b.date); });
+
+  // 選択指標に値のある記録だけ抽出
+  var points = filtered
+    .map(function(r) {
+      var v = r[_aiBodyMetric];
+      return { date: r.date, val: (v !== '' && v !== null && v !== undefined) ? parseFloat(v) : NaN };
+    })
+    .filter(function(p) { return !isNaN(p.val); });
+
+  var statsEl = document.getElementById('ai-body-stats');
+
+  if (points.length === 0) {
+    statsEl.innerHTML = '<div class="ai-no-data">この期間には身体データがありません</div>';
+    _aiDestroyChart('body');
+    return;
+  }
+
+  var labels = points.map(function(p) { return _aiDateLabel(p.date); });
+  var values = points.map(function(p) { return p.val; });
+  _aiDrawChart('body', document.getElementById('ai-body-chart'), labels, values,
+    metaDef.label + '(' + metaDef.unit + ')', '#D4547A');
+
+  if (points.length === 1) {
+    statsEl.innerHTML =
+      '<div class="ai-no-data">比較するには2回以上の記録が必要です</div>' +
+      '<div class="ai-stats-grid">' +
+        '<div class="ai-stat-box"><div class="ai-stat-label">現在</div>' +
+        '<div class="ai-stat-val">' + points[0].val.toFixed(1) +
+        '<span class="ai-stat-unit">' + metaDef.unit + '</span></div></div>' +
+      '</div>';
+    return;
+  }
+
+  var first = points[0], last = points[points.length - 1];
+  var diff  = last.val - first.val;
+  var rate  = (first.val !== 0) ? (diff / first.val * 100) : null;
+  var dc    = diff > 0 ? 'ai-diff-up' : diff < 0 ? 'ai-diff-down' : 'ai-diff-same';
+  var diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(1) + metaDef.unit;
+  var rateStr = (rate !== null) ? ((rate >= 0 ? '+' : '') + rate.toFixed(1) + '%') : '-';
+
+  statsEl.innerHTML =
+    '<div class="ai-stats-grid">' +
+      _aiStatBox('開始時', first.val.toFixed(1), metaDef.unit, first.date) +
+      _aiStatBox('最新',   last.val.toFixed(1),  metaDef.unit, last.date) +
+      _aiStatBoxRaw('変化量', '<span class="' + dc + '">' + aiEsc(diffStr) + '</span>') +
+      _aiStatBoxRaw('変化率', '<span class="' + dc + '">' + aiEsc(rateStr) + '</span>') +
+    '</div>';
+}
+
+// ===== 筋トレグラフ =====
+
+// 種目セレクトを全期間データから構築（期間切替では再構築しない）
+function _aiPopulateExerciseSelector() {
+  var sessions = _aiTrainSessions || [];
+  var nameSet  = {};
+  sessions.forEach(function(s) {
+    (s.exercises || []).forEach(function(ex) { if (ex.name) nameSet[ex.name] = true; });
+  });
+  var names = Object.keys(nameSet).sort();
+
+  var sel = document.getElementById('ai-exercise-select');
+  if (names.length === 0) {
+    sel.innerHTML = '<option value="">（記録がありません）</option>';
+    _aiExerciseName = null;
+  } else {
+    // 以前の選択が有効なら維持、なければ先頭を選択
+    if (!_aiExerciseName || names.indexOf(_aiExerciseName) < 0) {
+      _aiExerciseName = names[0];
+    }
+    sel.innerHTML = names.map(function(n) {
+      return '<option value="' + aiEsc(n) + '"' + (n === _aiExerciseName ? ' selected' : '') + '>' + aiEsc(n) + '</option>';
+    }).join('');
+  }
+}
+
+function aiOnExerciseChange(sel) {
+  _aiExerciseName = sel.value;
+  aiRenderTrChart();
+}
+
+function aiSetTrMetric(metric, btn) {
+  _aiTrMetric = metric;
+  document.querySelectorAll('.ai-tr-metric-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  aiRenderTrChart();
+}
+
+function aiRenderTrChart() {
+  var statsEl = document.getElementById('ai-tr-stats');
+
+  if (!_aiExerciseName) {
+    statsEl.innerHTML = '<div class="ai-no-data">種目を選択してください</div>';
+    _aiDestroyChart('tr');
+    return;
+  }
+
+  var sessions = _aiTrainSessions || [];
+  // 全期間データ（自己ベスト用）
+  var allPoints    = _aiAggregateTraining(sessions, _aiExerciseName, null);
+  // 選択期間データ（グラフ・統計用）
+  var periodPoints = _aiAggregateTraining(sessions, _aiExerciseName, _aiPeriodDays);
+
+  // 指標の定義
+  var metricDefs = {
+    weight: { key: 'maxWeight',    label: '最大重量',    unit: 'kg', color: '#D4547A' },
+    reps:   { key: 'maxReps',      label: '最大回数',    unit: '回', color: '#C2785A' },
+    volume: { key: 'totalVolume',  label: '総ボリューム', unit: 'kg', color: '#7B68EE' },
+    rpe:    { key: 'avgRpe',       label: 'RPE',         unit: '',   color: '#5B9BD5' }
+  };
+  var md = metricDefs[_aiTrMetric] || metricDefs.weight;
+
+  // 表示可能なポイントだけ抽出
+  var points = periodPoints
+    .map(function(p) { return { date: p.date, val: p[md.key] }; })
+    .filter(function(p) { return p.val !== null && p.val !== undefined && !isNaN(p.val); });
+
+  if (points.length === 0) {
+    var msg = periodPoints.length === 0
+      ? 'この期間には ' + _aiExerciseName + ' の記録がありません'
+      : 'この期間には ' + md.label + ' のデータがありません';
+    statsEl.innerHTML = '<div class="ai-no-data">' + aiEsc(msg) + '</div>';
+    _aiDestroyChart('tr');
+    return;
+  }
+
+  var labels = points.map(function(p) { return _aiDateLabel(p.date); });
+  var values = points.map(function(p) { return p.val; });
+  _aiDrawChart('tr', document.getElementById('ai-tr-chart'), labels, values,
+    _aiExerciseName + ' — ' + md.label + (md.unit ? '(' + md.unit + ')' : ''), md.color);
+
+  // 自己ベスト（重量のみ・全期間から計算）
+  var bestHtml = '';
+  if (_aiTrMetric === 'weight') {
+    var allW = allPoints.map(function(p) { return p.maxWeight; }).filter(function(v) { return v !== null && !isNaN(v); });
+    if (allW.length > 0) {
+      var best = Math.max.apply(null, allW);
+      bestHtml = '<div class="ai-best-badge">🏆 自己ベスト　' + best.toFixed(1) + ' kg</div>';
+    }
+  }
+
+  // 統計表示
+  if (points.length === 1) {
+    statsEl.innerHTML = bestHtml +
+      '<div class="ai-no-data">比較するには2回以上の記録が必要です</div>' +
+      '<div class="ai-stats-grid">' +
+        _aiStatBoxRaw('現在', _aiFormatVal(points[0].val, _aiTrMetric, md.unit)) +
+      '</div>';
+    return;
+  }
+
+  var first  = points[0], last = points[points.length - 1];
+  var diff   = last.val - first.val;
+  var rate   = (first.val !== 0) ? (diff / first.val * 100) : null;
+  var dc     = diff > 0 ? 'ai-diff-up' : diff < 0 ? 'ai-diff-down' : 'ai-diff-same';
+  var diffPfx = diff >= 0 ? '+' : '';
+  var diffDisp, rateStr;
+
+  if (_aiTrMetric === 'reps') {
+    diffDisp = diffPfx + Math.round(diff) + md.unit;
+  } else if (_aiTrMetric === 'volume') {
+    diffDisp = diffPfx + Math.round(diff) + md.unit;
+  } else if (_aiTrMetric === 'rpe') {
+    diffDisp = diffPfx + diff.toFixed(1);
+  } else {
+    diffDisp = diffPfx + diff.toFixed(1) + md.unit;
+  }
+  rateStr = (rate !== null) ? ((rate >= 0 ? '+' : '') + rate.toFixed(1) + '%') : '-';
+
+  statsEl.innerHTML = bestHtml +
+    '<div class="ai-stats-grid">' +
+      _aiStatBox('開始時', _aiFormatVal(first.val, _aiTrMetric, ''), md.unit, first.date) +
+      _aiStatBox('最新',   _aiFormatVal(last.val,  _aiTrMetric, ''), md.unit, last.date) +
+      _aiStatBoxRaw('変化量', '<span class="' + dc + '">' + aiEsc(diffDisp) + '</span>') +
+      _aiStatBoxRaw('変化率', '<span class="' + dc + '">' + aiEsc(rateStr)  + '</span>') +
+    '</div>';
+}
+
+// ===== トレーニングデータ集計 =====
+// dayFilter: null=全期間, 数字=直近n日
+// 戻り値: [{ date, maxWeight, maxReps, totalVolume, avgRpe }] 昇順
+
+function _aiAggregateTraining(sessions, exerciseName, dayFilter) {
+  var startDate = (dayFilter && dayFilter > 0) ? _aiGetStartDate(dayFilter) : null;
+  var byDate = {}, dateOrder = [];
+
+  sessions.forEach(function(s) {
+    if (!s.date) return;
+    if (startDate && s.date < startDate) return;
+
+    (s.exercises || []).forEach(function(ex) {
+      if (ex.name !== exerciseName) return;
+      if (!byDate[s.date]) {
+        byDate[s.date] = { date: s.date, sets: [], wFallback: null, rpeFallback: null };
+        dateOrder.push(s.date);
+      }
+      var entry = byDate[s.date];
+      if (ex.sets && ex.sets.length > 0) {
+        ex.sets.forEach(function(set) { entry.sets.push(set); });
+      }
+      // セット詳細なし時のフォールバック（旧データ互換）
+      if (ex.maxWeight && ex.maxWeight !== '') {
+        var w = parseFloat(ex.maxWeight);
+        if (!isNaN(w) && (entry.wFallback === null || w > entry.wFallback)) {
+          entry.wFallback = w;
+        }
+      }
+      if (ex.maxRpe && ex.maxRpe !== '') {
+        var r = parseFloat(ex.maxRpe);
+        if (!isNaN(r)) entry.rpeFallback = r;
+      }
+    });
+  });
+
+  // 重複日排除
+  var seen = {};
+  return dateOrder
+    .filter(function(d) { if (seen[d]) return false; seen[d] = true; return true; })
+    .sort(function(a, b) { return a.localeCompare(b); })
+    .map(function(d) {
+      var e    = byDate[d];
+      var sets = e.sets;
+      var maxWeight = null, maxReps = null, totalVolume = null, avgRpe = null;
+
+      if (sets.length > 0) {
+        // 重量: その日の最大重量
+        var ws = sets.map(function(s) { return parseFloat(s.weight); }).filter(function(v) { return !isNaN(v) && v > 0; });
+        if (ws.length > 0) maxWeight = Math.max.apply(null, ws);
+
+        // 回数: その日の最大回数を代表値として採用（最大=ベストパフォーマンスの代表）
+        var rs = sets.map(function(s) { return parseInt(s.reps); }).filter(function(v) { return !isNaN(v) && v > 0; });
+        if (rs.length > 0) maxReps = Math.max.apply(null, rs);
+
+        // 総ボリューム: 各セットの (重量 × 回数) の合計
+        // 例: 40kg×10回, 40kg×10回, 40kg×10回 → 400+400+400 = 1,200kg
+        var vol = 0, hasVol = false;
+        sets.forEach(function(s) {
+          var w = parseFloat(s.weight), r = parseInt(s.reps);
+          if (!isNaN(w) && !isNaN(r) && w > 0 && r > 0) { vol += w * r; hasVol = true; }
+        });
+        if (hasVol) totalVolume = vol;
+
+        // RPE: その日の全セットの平均RPE
+        var rpeList = sets.map(function(s) { return parseFloat(s.rpe); }).filter(function(v) { return !isNaN(v) && v > 0; });
+        if (rpeList.length > 0) {
+          avgRpe = rpeList.reduce(function(sum, v) { return sum + v; }, 0) / rpeList.length;
+        }
+      } else {
+        // セット詳細シートにデータのない旧レコードはフォールバック値を使用
+        maxWeight = e.wFallback;
+        avgRpe    = e.rpeFallback;
+      }
+
+      return { date: d, maxWeight: maxWeight, maxReps: maxReps, totalVolume: totalVolume, avgRpe: avgRpe };
+    });
+}
+
+// ===== Chart.js描画 =====
+
+function _aiDestroyChart(type) {
+  if (type === 'body' && _aiBodyChart) { _aiBodyChart.destroy(); _aiBodyChart = null; }
+  if (type === 'tr'   && _aiTrChart)   { _aiTrChart.destroy();   _aiTrChart   = null; }
+  if (type === 'bp'   && _aiBpChart)   { _aiBpChart.destroy();   _aiBpChart   = null; }
+  if (type === 'scat' && _s3ScatChart) { _s3ScatChart.destroy(); _s3ScatChart = null; }
+}
+
+function _aiDrawChart(type, canvasEl, labels, values, dataLabel, color) {
+  _aiDestroyChart(type);
+  if (!window.Chart) return; // Chart.js 未ロードの場合はスキップ
+
+  var chart = new Chart(canvasEl.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: dataLabel,
+        data: values,
+        borderColor: color,
+        backgroundColor: color + '22',
+        borderWidth: 2.5,
+        pointRadius: labels.length > 30 ? 2 : 4,
+        pointHoverRadius: 7,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 1.8,
+      interaction: { mode: 'nearest', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          displayColors: false,
+          callbacks: {
+            title: function(items) { return items[0].label; },
+            label: function(item) {
+              var raw = item.parsed.y;
+              return dataLabel.split('(')[0].trim() + ': ' + raw;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 8 },
+          grid:  { color: '#EAD9D022' }
+        },
+        y: {
+          ticks: { font: { size: 11 } },
+          grid:  { color: '#EAD9D044' }
+        }
+      }
+    }
+  });
+
+  if (type === 'body') _aiBodyChart = chart;
+  else                 _aiTrChart   = chart;
+}
+
+// ===== ユーティリティ =====
+
+// 日付文字列を MM/DD 形式に変換
+function _aiDateLabel(dateStr) {
+  return String(dateStr || '').replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$2/$3');
+}
+
+// 指標ごとの数値フォーマット（HTML文字列を返す）
+function _aiFormatVal(val, metric, unit) {
+  if (val === null || val === undefined || isNaN(val)) return '-';
+  var numStr;
+  if (metric === 'reps' || metric === 'volume') {
+    numStr = Math.round(val).toString();
+  } else if (metric === 'rpe') {
+    numStr = parseFloat(val).toFixed(1);
+  } else {
+    numStr = parseFloat(val).toFixed(1);
+  }
+  return unit ? numStr + '<span class="ai-stat-unit">' + unit + '</span>' : numStr;
+}
+
+// 統計ボックスHTML（値+単位+日付）
+function _aiStatBox(label, valStr, unit, date) {
+  var u = unit ? '<span class="ai-stat-unit">' + aiEsc(unit) + '</span>' : '';
+  var d = date ? '<div class="ai-stat-date">' + aiEsc(date.replace(/-/g, '/')) + '</div>' : '';
+  return '<div class="ai-stat-box"><div class="ai-stat-label">' + aiEsc(label) + '</div>' +
+    '<div class="ai-stat-val">' + aiEsc(valStr) + u + '</div>' + d + '</div>';
+}
+
+// 統計ボックスHTML（生HTML値）
+function _aiStatBoxRaw(label, innerHtml) {
+  return '<div class="ai-stat-box"><div class="ai-stat-label">' + aiEsc(label) + '</div>' +
+    '<div class="ai-stat-val">' + innerHtml + '</div></div>';
+}
+
+function aiEsc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== STEP3: 共通ユーティリティ =====
+
+// Pearson相関係数（n<3はnull）
+function _s3PearsonR(xs, ys) {
+  var n = xs.length;
+  if (n < 3) return null;
+  var mx = 0, my = 0;
+  for (var i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; }
+  mx /= n; my /= n;
+  var num = 0, dx2 = 0, dy2 = 0;
+  for (var i = 0; i < n; i++) {
+    var dx = xs[i] - mx, dy = ys[i] - my;
+    num += dx * dy; dx2 += dx * dx; dy2 += dy * dy;
+  }
+  var den = Math.sqrt(dx2 * dy2);
+  return den === 0 ? 0 : num / den;
+}
+
+// データ量に対するメッセージ
+function _s3DQ(n) {
+  if (n <= 0) return 'データなし（0件）';
+  if (n <= 2) return '参考値：まだデータが少ないです（' + n + '件）';
+  if (n <= 4) return 'データ蓄積中（' + n + '件）';
+  if (n <= 9) return '参考程度の傾向です（' + n + '件）';
+  return       '傾向を確認できます（' + n + '件）';
+}
+
+// 前期間の日付範囲 {start, end} を返す（全期間=0 の場合は null）
+function _s3PrevPeriod(days) {
+  if (!days) return null;
+  function fmt(d) {
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+  var curStart = new Date();
+  curStart.setHours(0, 0, 0, 0);
+  curStart.setDate(curStart.getDate() - days + 1);
+  var prevEnd = new Date(curStart);
+  prevEnd.setDate(prevEnd.getDate() - 1);
+  var prevStart = new Date(prevEnd);
+  prevStart.setDate(prevStart.getDate() - days + 1);
+  return { start: fmt(prevStart), end: fmt(prevEnd) };
+}
+
+// 折りたたみパネルHTML
+function _s3Collapse(id, title, bodyHtml) {
+  var safeId = aiEsc(id);
+  return '<div class="ai-collapse-wrap">' +
+    '<div class="ai-collapse-hdr" onclick="_s3Toggle(\'' + safeId + '\')">' +
+      '<span>' + aiEsc(title) + '</span>' +
+      '<span class="ai-collapse-arrow" id="s3arr-' + safeId + '">▶</span>' +
+    '</div>' +
+    '<div class="ai-collapse-body" id="s3body-' + safeId + '" style="display:none">' +
+      bodyHtml +
+    '</div>' +
+  '</div>';
+}
+
+function _s3Toggle(id) {
+  var body  = document.getElementById('s3body-' + id);
+  var arrow = document.getElementById('s3arr-' + id);
+  if (!body) return;
+  var isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent  = isOpen ? '▶' : '▼';
+  // 睡眠散布図は遅延レンダリング（hidden canvas に描くと崩れるため）
+  if (!isOpen && id === 'cond-sleep' && !_s3SlpDone && _s3SlpPairs && _s3SlpPairs.length >= 2) {
+    _s3SlpDone = true;
+    setTimeout(function() { _s3RenderSleepScatter(_s3SlpPairs); }, 60);
+  }
+}
+
+// カテゴリ別グループ集計 [{label, n, mean}]
+function _s3GroupMeans(pairs, labelFn) {
+  var g = {};
+  pairs.forEach(function(p) {
+    var lbl = labelFn(p);
+    if (!lbl && lbl !== 0) return;
+    lbl = String(lbl);
+    if (!g[lbl]) g[lbl] = { total: 0, n: 0 };
+    g[lbl].total += p.perf;
+    g[lbl].n++;
+  });
+  return Object.keys(g).map(function(lbl) {
+    return { label: lbl, n: g[lbl].n, mean: g[lbl].total / g[lbl].n };
+  });
+}
+
+// カテゴリ別パフォーマンスバーチャートHTML
+function _s3CatBars(groups) {
+  if (!groups || groups.length === 0) return '<div class="ai-no-data">データなし</div>';
+  var maxAbs = 0.001;
+  groups.forEach(function(g) { if (Math.abs(g.mean) > maxAbs) maxAbs = Math.abs(g.mean); });
+  var html = '<div class="s3-cat-list">';
+  groups.forEach(function(g) {
+    var w   = Math.abs(g.mean / maxAbs * 100).toFixed(1);
+    var cls = g.mean > 0.5 ? 'pos' : (g.mean < -0.5 ? 'neg' : 'zero');
+    var col = g.mean > 0.5 ? '#7B68EE' : (g.mean < -0.5 ? '#D4547A' : '#AAAAAA');
+    var sign = g.mean >= 0 ? '+' : '';
+    html += '<div class="s3-cat-row">' +
+      '<span class="s3-cat-lbl">' + aiEsc(g.label) + '</span>' +
+      '<div class="s3-bar-wrap"><div class="s3-bar ' + cls + '" style="width:' + w + '%"></div></div>' +
+      '<span class="s3-cat-pct" style="color:' + col + '">' + aiEsc(sign + g.mean.toFixed(1) + '%') + '</span>' +
+      '<span class="s3-cat-n">n=' + g.n + '</span>' +
+    '</div>';
+  });
+  return html + '</div>';
+}
+
+// ===== STEP3: パフォーマンス指数 =====
+
+// 全トレーニング日のパフォーマンス指数を計算 { date: % }
+// 正 = 過去平均より良い、負 = 過去平均より悪い
+function _s3BuildPerfMap() {
+  if (_aiPerfMap !== null) return _aiPerfMap;
+  var allSessions = _aiTrainSessions || [];
+
+  // 各種目の日別ボリューム履歴（日付昇順）
+  var exHist = {};
+  allSessions.forEach(function(sess) {
+    if (!sess.date) return;
+    (sess.exercises || []).forEach(function(ex) {
+      if (!ex.name) return;
+      var sets = ex.sets || [];
+      if (!sets.length) return;
+      var vol = 0, ok = false;
+      sets.forEach(function(s) {
+        var w = parseFloat(s.weight), r = parseInt(s.reps);
+        if (!isNaN(w) && !isNaN(r) && w > 0 && r > 0) { vol += w * r; ok = true; }
+      });
+      if (!ok) return;
+      if (!exHist[ex.name]) exHist[ex.name] = [];
+      exHist[ex.name].push({ date: sess.date, vol: vol });
+    });
+  });
+  Object.keys(exHist).forEach(function(n) {
+    exHist[n].sort(function(a, b) { return a.date.localeCompare(b.date); });
+  });
+
+  // 日別セッション集合
+  var byDate = {};
+  allSessions.forEach(function(sess) {
+    if (!sess.date) return;
+    if (!byDate[sess.date]) byDate[sess.date] = [];
+    byDate[sess.date].push(sess);
+  });
+
+  var perfMap = {};
+  Object.keys(byDate).forEach(function(date) {
+    var idxList = [];
+    byDate[date].forEach(function(sess) {
+      (sess.exercises || []).forEach(function(ex) {
+        if (!ex.name) return;
+        var sets = ex.sets || [];
+        if (!sets.length) return;
+        var todayVol = 0, hasVol = false;
+        sets.forEach(function(s) {
+          var w = parseFloat(s.weight), r = parseInt(s.reps);
+          if (!isNaN(w) && !isNaN(r) && w > 0 && r > 0) { todayVol += w * r; hasVol = true; }
+        });
+        if (!hasVol) return;
+        var hist = exHist[ex.name] || [];
+        // 今日より前のエントリをカウント
+        var bi = 0;
+        while (bi < hist.length && hist[bi].date < date) bi++;
+        if (bi < 1) return; // 過去実績が1件もない最初の記録は対象外
+        var recent = hist.slice(Math.max(0, bi - 10), bi); // 直近最大10セッションで平均
+        var avg = recent.reduce(function(s, e) { return s + e.vol; }, 0) / recent.length;
+        if (avg <= 0) return;
+        idxList.push((todayVol - avg) / avg * 100);
+      });
+    });
+    if (idxList.length > 0) {
+      perfMap[date] = idxList.reduce(function(s, v) { return s + v; }, 0) / idxList.length;
+    }
+  });
+
+  _aiPerfMap = perfMap;
+  return perfMap;
+}
+
+// 選択期間でフィルタしたパフォーマンスマップ
+function _s3PerfForPeriod() {
+  var all   = _s3BuildPerfMap();
+  var start = _aiGetStartDate(_aiPeriodDays);
+  if (!start) return all;
+  var res = {};
+  Object.keys(all).forEach(function(d) { if (d >= start) res[d] = all[d]; });
+  return res;
+}
+
+// ===== STEP3: 部位別トレーニング分析 =====
+
+function aiSetBpMetric(metric, btn) {
+  _aiBpMetric = metric;
+  document.querySelectorAll('#ai-s3-bp-card .ai-tr-metric-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  aiRenderBodyPart();
+}
+
+// 期間内の部位別集計を返す [{name, days, sets, reps, vol}]
+function _s3BpData(sessions, startDate, endDate) {
+  var parts = {};
+  sessions.forEach(function(sess) {
+    if (!sess.date) return;
+    if (startDate && sess.date < startDate) return;
+    if (endDate   && sess.date > endDate  ) return;
+    (sess.exercises || []).forEach(function(ex) {
+      var p = (ex.bodyPart && ex.bodyPart !== '') ? ex.bodyPart :
+              (_aiMasterMap && _aiMasterMap[ex.name]) ? _aiMasterMap[ex.name] : '未設定';
+      if (!parts[p]) parts[p] = { dSet: {}, sets: 0, reps: 0, vol: 0 };
+      parts[p].dSet[sess.date] = true;
+      var exSets = ex.sets || [];
+      parts[p].sets += exSets.length > 0 ? exSets.length : (parseInt(ex.totalSets) || 0);
+      exSets.forEach(function(s) {
+        var r = parseInt(s.reps), w = parseFloat(s.weight);
+        if (!isNaN(r) && r > 0) parts[p].reps += r;
+        if (!isNaN(w) && !isNaN(r) && w > 0 && r > 0) parts[p].vol += w * r;
+      });
+    });
+  });
+  return Object.keys(parts).map(function(name) {
+    return { name: name, days: Object.keys(parts[name].dSet).length,
+             sets: parts[name].sets, reps: parts[name].reps,
+             vol:  Math.round(parts[name].vol) };
+  });
+}
+
+function aiRenderBodyPart() {
+  var statsEl = document.getElementById('ai-bp-stats');
+  var wrapEl  = document.getElementById('ai-bp-chart-wrap');
+  if (!statsEl || !wrapEl) return;
+
+  var sessions = _aiTrainSessions || [];
+  var curStart = _aiGetStartDate(_aiPeriodDays);
+  var curData  = _s3BpData(sessions, curStart, null);
+  var prev     = _s3PrevPeriod(_aiPeriodDays);
+  var prevData = prev ? _s3BpData(sessions, prev.start, prev.end) : null;
+
+  var mKey = { volume: 'vol', sets: 'sets', reps: 'reps' }[_aiBpMetric] || 'vol';
+  curData.sort(function(a, b) { return b[mKey] - a[mKey]; });
+
+  if (curData.length === 0 || curData.every(function(d) { return d[mKey] === 0; })) {
+    statsEl.innerHTML = '<div class="ai-no-data">この期間には部位別データがありません<br><small>種目に「部位」を設定して記録するとグラフが表示されます</small></div>';
+    _aiDestroyChart('bp');
+    wrapEl.style.display = 'none';
+    return;
+  }
+  wrapEl.style.display = 'block';
+
+  // Chart.js 横棒グラフ
+  var chartH = Math.max(140, curData.length * 48);
+  wrapEl.style.height = chartH + 'px';
+  _aiDestroyChart('bp');
+  if (window.Chart) {
+    var COLORS = ['#D4547A','#7B68EE','#C2785A','#5B9BD5','#5BA45B','#E6984C','#9B59B6','#1ABC9C'];
+    var mLabel = { volume: 'ボリューム (kg)', sets: 'セット数', reps: '総回数' }[_aiBpMetric];
+    _aiBpChart = new Chart(document.getElementById('ai-bp-chart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: curData.map(function(d) { return d.name; }),
+        datasets: [{
+          label: mLabel,
+          data:  curData.map(function(d) { return d[mKey]; }),
+          backgroundColor: curData.map(function(_, i) { return COLORS[i % COLORS.length] + 'CC'; }),
+          borderRadius: 5,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(item) {
+                var v = item.parsed.x;
+                if (_aiBpMetric === 'volume') return 'ボリューム: ' + v.toLocaleString() + ' kg';
+                if (_aiBpMetric === 'sets')   return 'セット数: ' + v;
+                return '総回数: ' + v;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { font: { size: 11 } }, grid: { color: '#EAD9D044' } },
+          y: { ticks: { font: { size: 12 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // 比較テーブル
+  var prevMap = {};
+  if (prevData) prevData.forEach(function(d) { prevMap[d.name] = d; });
+  var mLblShort = { volume: 'ボリューム(kg)', sets: 'セット数', reps: '総回数' }[_aiBpMetric];
+  var tbl = '<div class="s3-bp-tbl">';
+  tbl += '<div class="s3-bp-row" style="font-size:11px;color:var(--text-sub);font-weight:700;padding-bottom:4px">' +
+    '<span>部位</span><span>' + aiEsc(mLblShort) + '</span><span>' + (prev ? '前期間比' : '') + '</span></div>';
+  curData.forEach(function(d) {
+    var cur = d[mKey];
+    var diffHtml = '';
+    if (prev) {
+      if (prevMap[d.name] !== undefined) {
+        var pv   = prevMap[d.name][mKey];
+        var diff = cur - pv;
+        var pct  = pv > 0 ? (diff / pv * 100) : (diff > 0 ? 100 : 0);
+        var dc   = diff > 0 ? 's3-diff-up' : diff < 0 ? 's3-diff-down' : 's3-diff-same';
+        var sign = diff >= 0 ? '+' : '';
+        diffHtml = '<span class="s3-bp-diff ' + dc + '">' + aiEsc(sign + pct.toFixed(0) + '%') + '</span>';
+      } else {
+        diffHtml = '<span class="s3-bp-diff s3-diff-new">NEW</span>';
+      }
+    }
+    var dispVal = _aiBpMetric === 'volume' ? cur.toLocaleString() : cur;
+    tbl += '<div class="s3-bp-row">' +
+      '<span class="s3-bp-name">' + aiEsc(d.name) + '</span>' +
+      '<span class="s3-bp-val">' + aiEsc(String(dispVal)) + '</span>' +
+      diffHtml + '</div>';
+  });
+  tbl += '</div>';
+  if (prev) {
+    tbl += '<div style="font-size:11px;color:var(--text-sub);margin-top:6px">前期間: ' +
+      aiEsc(prev.start.replace(/-/g,'/') + ' 〜 ' + prev.end.replace(/-/g,'/')) + '</div>';
+  }
+  statsEl.innerHTML = tbl;
+}
+
+// ===== STEP3: コンディションとの関連性 =====
+
+function aiRenderCondition() {
+  var el = document.getElementById('ai-s3-cond-body');
+  if (!el) return;
+
+  var perfMap  = _s3PerfForPeriod();
+  var perfDays = Object.keys(perfMap).length;
+
+  // トレーニング履歴が0日でも件数を明示して表示する
+  if (perfDays === 0) {
+    el.innerHTML =
+      '<div style="font-size:12px;color:var(--text-sub);margin-bottom:8px">' +
+        '体調 × トレーニング　分析可能データ：<strong>0日分</strong></div>' +
+      '<div class="ai-no-data">関連性を分析するための筋トレ履歴を蓄積中です<br>' +
+        '<span style="font-size:12px">5日分以上になると参考傾向を表示できます</span></div>';
+    return;
+  }
+
+  var start = _aiGetStartDate(_aiPeriodDays);
+  var condMap = {};
+  (_aiCondRecs || []).forEach(function(r) {
+    if (start && r.date < start) return;
+    condMap[r.date] = r;
+  });
+
+  // 同日ペアを作成（体調記録とパフォーマンス指数が両方ある日）
+  var pairs = [];
+  Object.keys(condMap).forEach(function(date) {
+    if (perfMap[date] !== undefined) {
+      pairs.push({ date: date, cond: condMap[date], perf: perfMap[date] });
+    }
+  });
+
+  // 件数は0でも常に表示
+  var html =
+    '<div style="font-size:12px;color:var(--text-sub);margin-bottom:8px">' +
+      '体調 × トレーニング　分析可能データ：<strong>' + pairs.length + '日分</strong></div>' +
+    '<div class="ai-dq">' + aiEsc(_s3DQ(pairs.length)) + '</div>';
+
+  if (pairs.length === 0) {
+    html += '<div class="ai-no-data" style="padding:12px 0 0">体調を記録した日にトレーニングの組み合わせがまだありません<br>' +
+      '体調を記録しながらトレーニングを続けると傾向が見えてきます</div>';
+    el.innerHTML = html;
+    return;
+  }
+
+  // --- 睡眠時間（散布図 + 相関係数）--- 2件以上で表示
+  var slpPairs = pairs.filter(function(p) { return p.cond.sleepHours !== ''; });
+  _s3SlpPairs  = slpPairs.length >= 2 ? slpPairs : null;
+  if (slpPairs.length >= 2) {
+    var xs   = slpPairs.map(function(p) { return parseFloat(p.cond.sleepHours); });
+    var ys   = slpPairs.map(function(p) { return p.perf; });
+    var r    = _s3PearsonR(xs, ys); // 3件未満はnull
+    var rStr = r !== null ? (r >= 0 ? '+' : '') + r.toFixed(2) : '-';
+    var rCls = !r || Math.abs(r) < 0.2 ? 's3-pearson-zero' : (r > 0 ? 's3-pearson-pos' : 's3-pearson-neg');
+    var rNote = r === null ? '3件以上になると相関係数を計算できます' :
+      (Math.abs(r) >= 0.5 ? '強い傾向あり' : Math.abs(r) >= 0.3 ? '弱い傾向あり' : 'ほぼ無関係');
+    var slpBody =
+      '<div class="ai-dq">' + aiEsc(_s3DQ(slpPairs.length)) + '</div>' +
+      '<div class="s3-scatter-wrap"><canvas id="s3-sleep-scat"></canvas></div>' +
+      '<div class="s3-pearson-row">' +
+        '<span class="s3-pearson-lbl">相関係数（Pearson r）</span>' +
+        '<span class="s3-pearson-val ' + rCls + '">r = ' + aiEsc(rStr) + '</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text-sub)">' + aiEsc(rNote) + '　※傾向の参考であり因果関係ではありません</div>';
+    html += _s3Collapse('cond-sleep', '睡眠時間とパフォーマンスの傾向（' + slpPairs.length + '件）', slpBody);
+  }
+
+  // --- 睡眠の質（1-5）--- 2件以上で表示
+  var sqPairs = pairs.filter(function(p) { return p.cond.sleepQuality !== ''; });
+  if (sqPairs.length >= 2) {
+    var sqG = _s3GroupMeans(sqPairs, function(p) {
+      var v = parseInt(p.cond.sleepQuality);
+      return isNaN(v) ? p.cond.sleepQuality : (v >= 4 ? '高い(4-5)' : v === 3 ? '普通(3)' : '低い(1-2)');
+    });
+    var sqOrd = {'高い(4-5)': 0, '普通(3)': 1, '低い(1-2)': 2};
+    sqG.sort(function(a, b) {
+      return (sqOrd[a.label] !== undefined ? sqOrd[a.label] : 9) - (sqOrd[b.label] !== undefined ? sqOrd[b.label] : 9);
+    });
+    html += _s3Collapse('cond-sq', '睡眠の質とパフォーマンスの傾向（' + sqPairs.length + '件）',
+      '<div class="ai-dq">' + aiEsc(_s3DQ(sqPairs.length)) + '</div>' + _s3CatBars(sqG) +
+      '<div style="font-size:11px;color:var(--text-sub);margin-top:6px">数値はパフォーマンス指数の平均（過去実績との差）　※傾向の参考</div>');
+  }
+
+  // --- 疲労度（1-10）--- 2件以上で表示
+  var fatPairs = pairs.filter(function(p) { return p.cond.fatigue !== ''; });
+  if (fatPairs.length >= 2) {
+    var fatG = _s3GroupMeans(fatPairs, function(p) {
+      var v = parseInt(p.cond.fatigue);
+      return isNaN(v) ? p.cond.fatigue : (v <= 3 ? '軽い(1-3)' : v <= 7 ? '中程度(4-7)' : '重い(8-10)');
+    });
+    var fatOrd = {'軽い(1-3)': 0, '中程度(4-7)': 1, '重い(8-10)': 2};
+    fatG.sort(function(a, b) {
+      return (fatOrd[a.label] !== undefined ? fatOrd[a.label] : 9) - (fatOrd[b.label] !== undefined ? fatOrd[b.label] : 9);
+    });
+    html += _s3Collapse('cond-fat', '疲労度とパフォーマンスの傾向（' + fatPairs.length + '件）',
+      '<div class="ai-dq">' + aiEsc(_s3DQ(fatPairs.length)) + '</div>' + _s3CatBars(fatG) +
+      '<div style="font-size:11px;color:var(--text-sub);margin-top:6px">数値はパフォーマンス指数の平均（過去実績との差）　※傾向の参考</div>');
+  }
+
+  // --- 体調テキスト（良い/普通/悪い）--- 2件以上で表示
+  var cndPairs = pairs.filter(function(p) { return p.cond.condition !== ''; });
+  if (cndPairs.length >= 2) {
+    var cndG = _s3GroupMeans(cndPairs, function(p) { return p.cond.condition; });
+    var cndOrd = {'良い': 0, '普通': 1, '悪い': 2};
+    cndG.sort(function(a, b) {
+      return (cndOrd[a.label] !== undefined ? cndOrd[a.label] : 9) - (cndOrd[b.label] !== undefined ? cndOrd[b.label] : 9);
+    });
+    html += _s3Collapse('cond-cnd', '体調とパフォーマンスの傾向（' + cndPairs.length + '件）',
+      '<div class="ai-dq">' + aiEsc(_s3DQ(cndPairs.length)) + '</div>' + _s3CatBars(cndG) +
+      '<div style="font-size:11px;color:var(--text-sub);margin-top:6px">数値はパフォーマンス指数の平均（過去実績との差）　※傾向の参考</div>');
+  }
+
+  if (slpPairs.length < 2 && sqPairs.length < 2 && fatPairs.length < 2 && cndPairs.length < 2) {
+    html += '<div class="ai-no-data" style="padding:8px 0 0">睡眠・疲労・体調を記録するとここに傾向が表示されます</div>';
+  }
+
+  el.innerHTML = html;
+  // ※散布図は _s3Toggle() でパネルを開いた時に遅延描画
+}
+
+function _s3RenderSleepScatter(slpPairs) {
+  var canvas = document.getElementById('s3-sleep-scat');
+  if (!canvas || !window.Chart) return;
+  _aiDestroyChart('scat');
+  var pts = slpPairs.map(function(p) {
+    return { x: parseFloat(p.cond.sleepHours), y: parseFloat(p.perf.toFixed(2)) };
+  });
+  _s3ScatChart = new Chart(canvas.getContext('2d'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: '睡眠時間 vs パフォーマンス指数',
+        data: pts,
+        backgroundColor: '#7B68EEAA',
+        pointRadius: 5,
+        pointHoverRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(item) {
+              var sign = item.parsed.y >= 0 ? '+' : '';
+              return '睡眠: ' + item.parsed.x + 'h  指数: ' + sign + item.parsed.y.toFixed(1) + '%';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '睡眠時間（時間）', font: { size: 11 } },
+          ticks: { font: { size: 11 } },
+          grid:  { color: '#EAD9D044' }
+        },
+        y: {
+          title: { display: true, text: 'パフォーマンス指数（%）', font: { size: 11 } },
+          ticks: { font: { size: 11 } },
+          grid:  { color: '#EAD9D044' }
+        }
+      }
+    }
+  });
+}
+
+// ===== STEP3: 食事との関連性 =====
+
+function aiRenderMeal() {
+  var el = document.getElementById('ai-s3-meal-body');
+  if (!el) return;
+
+  var perfMap  = _s3PerfForPeriod();
+  var perfDays = Object.keys(perfMap).length;
+
+  // トレーニング履歴が0日でも件数を明示して表示する
+  if (perfDays === 0) {
+    el.innerHTML =
+      '<div style="font-size:12px;color:var(--text-sub);margin-bottom:8px">' +
+        '食事 × トレーニング　分析可能データ：<strong>0日分</strong></div>' +
+      '<div class="ai-no-data">関連性を分析するための筋トレ履歴を蓄積中です<br>' +
+        '<span style="font-size:12px">5日分以上になると参考傾向を表示できます</span></div>';
+    return;
+  }
+
+  var start = _aiGetStartDate(_aiPeriodDays);
+  var mealByDate = {};
+  (_aiMealRecs3 || []).forEach(function(r) {
+    if (start && r.date < start) return;
+    if (!mealByDate[r.date]) mealByDate[r.date] = [];
+    mealByDate[r.date].push(r);
+  });
+
+  // 食事記録とパフォーマンス指数が同日にある組み合わせをペアリング
+  var allPairs = [];
+  Object.keys(mealByDate).forEach(function(date) {
+    if (perfMap[date] !== undefined) {
+      mealByDate[date].forEach(function(rec) {
+        allPairs.push({ date: date, meal: rec, perf: perfMap[date] });
+      });
+    }
+  });
+
+  // 件数は0でも常に表示
+  var html =
+    '<div style="font-size:12px;color:var(--text-sub);margin-bottom:8px">' +
+      '食事 × トレーニング　分析可能データ：<strong>' + allPairs.length + '日分</strong></div>' +
+    '<div class="ai-dq">' + aiEsc(_s3DQ(allPairs.length)) + '</div>';
+
+  if (allPairs.length === 0) {
+    html += '<div class="ai-no-data" style="padding:12px 0 0">食事を記録した日のトレーニングデータがまだありません<br>' +
+      '食事を記録しながらトレーニングを続けると傾向が見えてきます</div>';
+    el.innerHTML = html;
+    return;
+  }
+
+  var easyPairs = allPairs.filter(function(p) { return p.meal.inputMode === 'かんたん'; });
+  var detPairs  = allPairs.filter(function(p) { return p.meal.inputMode === '詳細'; });
+
+  var CatOrder = {'少ない': 0, '普通': 1, '多い': 2};
+  function sortCat(g) {
+    g.sort(function(a, b) {
+      return (CatOrder[a.label] !== undefined ? CatOrder[a.label] : 9) -
+             (CatOrder[b.label] !== undefined ? CatOrder[b.label] : 9);
+    });
+    return g;
+  }
+
+  // --- かんたん入力: カテゴリ別比較 --- 2件以上で表示
+  if (easyPairs.length >= 2) {
+    var eHtml = '<div class="ai-dq">' + aiEsc(_s3DQ(easyPairs.length)) + '</div>';
+    var catDefs = [
+      { key: 'mealAmount',   label: '食事量' },
+      { key: 'proteinLevel', label: 'タンパク質' },
+      { key: 'carbLevel',    label: '炭水化物' },
+      { key: 'fatLevel',     label: '脂質' }
+    ];
+    catDefs.forEach(function(def) {
+      var cp = easyPairs.filter(function(p) { return p.meal[def.key] !== '' && p.meal[def.key] !== undefined; });
+      if (cp.length < 2) return;
+      eHtml += '<div class="s3-sub-hdr">' + aiEsc(def.label) + '</div>' +
+        _s3CatBars(sortCat(_s3GroupMeans(cp, function(p) { return p.meal[def.key]; })));
+    });
+
+    var prePairs = easyPairs.filter(function(p) { return p.meal.preWorkoutMeal !== '' && p.meal.preWorkoutMeal !== undefined; });
+    if (prePairs.length >= 2) {
+      eHtml += '<div class="s3-sub-hdr">運動前食事</div>' +
+        _s3CatBars(_s3GroupMeans(prePairs, function(p) { return p.meal.preWorkoutMeal; }));
+    }
+
+    var pcPairs = easyPairs.filter(function(p) { return p.meal.preWorkoutCarbs !== '' && p.meal.preWorkoutCarbs !== undefined; });
+    if (pcPairs.length >= 2) {
+      eHtml += '<div class="s3-sub-hdr">運動前の炭水化物</div>' +
+        _s3CatBars(sortCat(_s3GroupMeans(pcPairs, function(p) { return p.meal.preWorkoutCarbs; })));
+    }
+
+    eHtml += '<div style="font-size:11px;color:var(--text-sub);margin-top:8px">数値はパフォーマンス指数の平均。傾向の参考であり因果関係の断定ではありません</div>';
+    html += _s3Collapse('meal-easy', 'かんたん入力の食事分析（' + easyPairs.length + '件）', eHtml);
+  }
+
+  // --- 詳細入力: 数値相関（Pearson r）--- 2件以上で表示、r は3件以上から
+  if (detPairs.length >= 2) {
+    var dHtml = '<div class="ai-dq">' + aiEsc(_s3DQ(detPairs.length)) + '</div>';
+    var numDefs = [
+      { key: 'protein',  label: 'タンパク質 (g)' },
+      { key: 'carbs',    label: '炭水化物 (g)' },
+      { key: 'fat',      label: '脂質 (g)' },
+      { key: 'calories', label: 'カロリー (kcal)' }
+    ];
+    var hasAny = false;
+    numDefs.forEach(function(def) {
+      var np = detPairs.filter(function(p) {
+        var v = parseFloat(p.meal[def.key]);
+        return !isNaN(v) && v >= 0;
+      });
+      if (np.length < 1) return;
+      hasAny = true;
+      var rStr = '-', rCls = 's3-pearson-zero';
+      if (np.length >= 3) {
+        var xs = np.map(function(p) { return parseFloat(p.meal[def.key]); });
+        var ys = np.map(function(p) { return p.perf; });
+        var r  = _s3PearsonR(xs, ys);
+        if (r !== null) {
+          rStr = (r >= 0 ? '+' : '') + r.toFixed(2);
+          rCls = Math.abs(r) < 0.2 ? 's3-pearson-zero' : (r > 0 ? 's3-pearson-pos' : 's3-pearson-neg');
+        }
+      }
+      dHtml += '<div class="s3-pearson-row">' +
+        '<span class="s3-pearson-lbl">' + aiEsc(def.label) + '（' + np.length + '件）</span>' +
+        '<span class="s3-pearson-val ' + rCls + '">r = ' + aiEsc(rStr) + '</span>' +
+      '</div>';
+    });
+    if (!hasAny) {
+      dHtml += '<div style="font-size:12px;color:var(--text-sub);padding:4px 0">数値項目が記録されたデータがまだありません</div>';
+    }
+    dHtml += '<div style="font-size:11px;color:var(--text-sub);margin-top:6px">|r|≥0.5=強い傾向、≥0.3=弱い傾向（3件以上で計算）　※因果関係ではありません</div>';
+    html += _s3Collapse('meal-det', '詳細入力の栄養素分析（' + detPairs.length + '件）', dHtml);
+  }
+
+  if (easyPairs.length < 2 && detPairs.length < 2) {
+    html += '<div class="ai-no-data" style="padding:8px 0 0">かんたん入力または詳細入力で食事を記録すると傾向が表示されます</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// ===== STEP4準備: 将来AI用構造化データ =====
+
+function aiComputeStep4Data() {
+  var perfMap   = _s3BuildPerfMap();
+  var start     = _aiGetStartDate(_aiPeriodDays);
+  var sessions  = _aiTrainSessions || [];
+  var bodyRecs  = _aiBodyRecords   || [];
+  var condRecs  = _aiCondRecs      || [];
+  var mealRecs  = _aiMealRecs3     || [];
+
+  var fSessions = start ? sessions.filter(function(s) { return s.date >= start; }) : sessions;
+  var fBody     = start ? bodyRecs.filter(function(r) { return r.date >= start; }) : bodyRecs;
+  var fCond     = start ? condRecs.filter(function(r) { return r.date >= start; }) : condRecs;
+  var fMeal     = start ? mealRecs.filter(function(r) { return r.date >= start; }) : mealRecs;
+  var fPerf     = _s3PerfForPeriod();
+
+  var bpData    = _s3BpData(fSessions, null, null);
+  var perfDates = Object.keys(fPerf).sort();
+  var perfVals  = perfDates.map(function(d) { return fPerf[d]; });
+  var avgPerf   = perfVals.length > 0 ? perfVals.reduce(function(s,v){return s+v;},0)/perfVals.length : null;
+
+  var wRecs     = fBody.filter(function(r) { return r.weight !== ''; });
+  var wStart    = wRecs.length > 0 ? parseFloat(wRecs[wRecs.length-1].weight) : null;
+  var wEnd      = wRecs.length > 0 ? parseFloat(wRecs[0].weight) : null;
+  var wDelta    = (wStart && wEnd) ? parseFloat((wEnd - wStart).toFixed(1)) : null;
+
+  var sleepRecs = fCond.filter(function(r) { return r.sleepHours !== ''; });
+  var avgSleep  = sleepRecs.length > 0
+    ? parseFloat((sleepRecs.reduce(function(s,r){return s+parseFloat(r.sleepHours);},0)/sleepRecs.length).toFixed(1))
+    : null;
+
+  var condDateSet = {};
+  fCond.forEach(function(r) { condDateSet[r.date] = true; });
+  var mealDateSet = {};
+  fMeal.forEach(function(r) { mealDateSet[r.date] = true; });
+
+  return {
+    meta: {
+      period:    _aiPeriodDays === 0 ? '全期間' : _aiPeriodDays + '日間',
+      startDate: start || 'all-time',
+      generatedAt: new Date().toISOString()
+    },
+    training: {
+      sessionCount:   fSessions.length,
+      bodyPartSummary: bpData,
+      performanceIndex: {
+        dataPoints: perfVals.length,
+        average:    avgPerf !== null ? parseFloat(avgPerf.toFixed(1)) : null,
+        trend: perfDates.map(function(d,i){ return { date:d, index:parseFloat(perfVals[i].toFixed(1)) }; })
+      }
+    },
+    body: {
+      measurementCount: fBody.length,
+      weightDelta:      wDelta
+    },
+    condition: {
+      recordCount:   fCond.length,
+      avgSleepHours: avgSleep
+    },
+    meal: {
+      recordCount: fMeal.length,
+      easyCount:   fMeal.filter(function(r){ return r.inputMode==='かんたん'; }).length,
+      detailCount: fMeal.filter(function(r){ return r.inputMode==='詳細'; }).length
+    },
+    dataQuality: {
+      hasPerfIndexData:      Object.keys(perfMap).length > 0,
+      conditionTrainingPairs: Object.keys(fPerf).filter(function(d){ return condDateSet[d]; }).length,
+      mealTrainingPairs:      Object.keys(fPerf).filter(function(d){ return mealDateSet[d]; }).length
+    }
+  };
+}
+</script>

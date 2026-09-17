@@ -1,0 +1,404 @@
+<!-- ===== WORKOUT CLUB ヒーロー ===== -->
+<div class="home-hero-dark">
+  <div class="home-hero-wc">
+    <div class="home-hero-workout">WORKOUT</div>
+    <div class="home-hero-club">CLUB</div>
+  </div>
+  <div class="home-hero-tagline">
+    <span class="home-hero-tagline-pain">NO PAIN</span>
+    <span class="home-hero-tagline-gain">NO GAIN</span>
+  </div>
+  <div class="home-hero-sub">
+    <div class="home-hero-motto">昨日より強い、ワタシでいく。</div>
+    <div class="home-hero-date-pill">
+      <span id="home-hero-date-text">—</span>
+    </div>
+  </div>
+</div>
+
+<span id="home-greeting" style="display:none"></span>
+
+<!-- ===== メインCTA ===== -->
+<button class="home-cta-btn" onclick="homeNavigateTo('record','training')">
+  &#9654; 今日のトレーニングを始める
+</button>
+
+<!-- ===== コンテンツラッパー ===== -->
+<div class="home-content-wrap">
+
+  <div id="home-loading" class="home-loading">読み込み中…</div>
+
+  <div id="home-content" style="display:none">
+
+    <div class="home-section-label">TODAY'S SUMMARY</div>
+
+    <!-- 日付カード (過去日選択) -->
+    <div class="home-date-card" id="home-date-card">
+      <div>
+        <div class="home-date-label" id="home-date-label">TODAY</div>
+        <div class="home-date-main" id="home-date-main">—</div>
+      </div>
+      <input type="date" id="home-date-picker"
+             class="home-date-picker-input"
+             title="日付を選択して過去の記録を確認">
+    </div>
+
+    <!-- 筋トレサマリー -->
+    <div id="home-training-card" class="home-summary-card" style="display:none">
+      <div class="home-card-header">
+        <span class="home-card-icon">&#128170;</span>
+        <span class="home-card-title">今日の筋トレ</span>
+      </div>
+      <div class="home-card-stats" id="home-training-stats"></div>
+      <div class="home-card-sub" id="home-training-exercises"></div>
+    </div>
+
+    <!-- 体調サマリー -->
+    <div id="home-condition-card" class="home-summary-card" style="display:none">
+      <div class="home-card-header">
+        <span class="home-card-icon">&#128153;</span>
+        <span class="home-card-title">今日の体調</span>
+      </div>
+      <div id="home-condition-stats"></div>
+    </div>
+
+    <!-- 有酸素サマリー -->
+    <div id="home-cardio-card" class="home-summary-card" style="display:none">
+      <div class="home-card-header">
+        <span class="home-card-icon">&#127939;</span>
+        <span class="home-card-title">今日の有酸素</span>
+      </div>
+      <div id="home-cardio-stats"></div>
+    </div>
+
+    <!-- 食事サマリー -->
+    <div id="home-meal-card" class="home-summary-card" style="display:none">
+      <div class="home-card-header">
+        <span class="home-card-icon">&#129367;</span>
+        <span class="home-card-title">今日の食事・栄養</span>
+      </div>
+      <div id="home-meal-stats"></div>
+    </div>
+
+    <!-- ケアサマリー -->
+    <div id="home-care-card" class="home-summary-card" style="display:none">
+      <div class="home-card-header">
+        <span class="home-card-icon">&#127807;</span>
+        <span class="home-card-title">今日のケア</span>
+      </div>
+      <div id="home-care-stats"></div>
+    </div>
+
+    <!-- 空状態 -->
+    <div id="home-empty" style="display:none">
+      <div class="placeholder-card">
+        <div class="icon">&#128203;</div>
+        <div class="title">まだ記録がありません</div>
+        <div class="desc">下のメニューからトレーニングや<br>体調を記録しましょう</div>
+      </div>
+    </div>
+
+    <!-- デバッグパネル（非表示） -->
+    <div id="home-debug-panel" style="display:none;margin-top:16px;padding:12px;background:#111;border-radius:4px;font-size:12px;word-break:break-all;white-space:pre-wrap;color:#888"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button onclick="homeDebug()" style="font-size:11px;padding:4px 10px;background:none;border:1px solid #2A2A2A;border-radius:4px;color:#444">データ診断</button>
+    </div>
+
+  </div><!-- /home-content -->
+
+  <!-- ===== ショートカットメニュー ===== -->
+  <div class="home-section-label" style="margin-top:18px">MENU</div>
+  <div class="home-menu-grid">
+    <div class="home-menu-card" onclick="homeNavigateTo('record','training')">
+      <div class="home-menu-icon">&#127947;</div>
+      <div class="home-menu-title">トレーニング記録</div>
+      <div class="home-menu-desc">種目・重量・回数・セット</div>
+    </div>
+    <div class="home-menu-card" onclick="homeNavigateTo('record','cardio')">
+      <div class="home-menu-icon">&#127939;</div>
+      <div class="home-menu-title">有酸素運動</div>
+      <div class="home-menu-desc">ウォーク・ランなど</div>
+    </div>
+    <div class="home-menu-card" onclick="homeNavigateTo('record','meal')">
+      <div class="home-menu-icon">&#129367;</div>
+      <div class="home-menu-title">食事・栄養記録</div>
+      <div class="home-menu-desc">たんぱく質・カロリー</div>
+    </div>
+    <div class="home-menu-card" onclick="homeNavigateTo('record','condition')">
+      <div class="home-menu-icon">&#128153;</div>
+      <div class="home-menu-title">コンディション</div>
+      <div class="home-menu-desc">睡眠・疲労・体調</div>
+    </div>
+    <div class="home-menu-card" onclick="homeNavigateTo('record','care')">
+      <div class="home-menu-icon">&#129334;</div>
+      <div class="home-menu-title">ケア記録</div>
+      <div class="home-menu-desc">ストレッチ・回復</div>
+    </div>
+    <div class="home-menu-card" onclick="homeNavigateTo('history')">
+      <div class="home-menu-icon">&#128248;</div>
+      <div class="home-menu-title">身体データ</div>
+      <div class="home-menu-desc">体重・サイズ・写真</div>
+    </div>
+  </div>
+
+  <!-- ===== モチベーション ===== -->
+  <div class="home-motivate">
+    <div class="home-motivate-ja">続ける私が、いちばんカッコいい。</div>
+    <div class="home-motivate-en">A BETTER ME EVERY DAY.</div>
+  </div>
+
+</div><!-- /home-content-wrap -->
+
+<script>
+// ===== ヒーロー初期化（GAS不要・即時実行） =====
+(function() {
+  var now = new Date();
+  // 新ヒーロー: 日本語日付テキスト
+  var days = ['日','月','火','水','木','金','土'];
+  var dateStr = (now.getMonth() + 1) + '月' + now.getDate() + '日（' + days[now.getDay()] + '）';
+  var el = document.getElementById('home-hero-date-text');
+  if (el) el.textContent = dateStr;
+
+  // 旧挨拶互換
+  var h = now.getHours();
+  var greeting = h >= 5 && h < 12  ? 'Good Morning!'   :
+                 h >= 12 && h < 18 ? 'Good Afternoon!'  :
+                 h >= 18 && h < 22 ? 'Good Evening!'    : 'Good Night!';
+  var greetEl = document.getElementById('home-greeting');
+  if (greetEl) greetEl.textContent = greeting;
+})();
+
+// ===== クイックアクション ナビゲーション =====
+function homeNavigateTo(page, subTab) {
+  var btn = document.getElementById('nav-btn-' + page);
+  var TITLES = {
+    home:    'ホーム',
+    record:  '記録する',
+    timer:   'タイマー',
+    history: '身体データ',
+    ai:      'AI分析'
+  };
+  if (btn) showPage(page, TITLES[page] || page, btn);
+
+  if (subTab) {
+    setTimeout(function() {
+      var SUB_IDX = { training: 0, cardio: 1, condition: 2, meal: 3, care: 4 };
+      var idx = SUB_IDX[subTab];
+      var subBtns = document.querySelectorAll('.sub-tab');
+      if (idx !== undefined && subBtns[idx]) {
+        showSubTab(subTab, subBtns[idx]);
+      }
+    }, 60);
+  }
+}
+
+// ===== 選択日付（初期値: 今日） =====
+var homeSelectedDate = (function() {
+  var n = new Date();
+  return n.getFullYear() + '-' + ('0'+(n.getMonth()+1)).slice(-2) + '-' + ('0'+n.getDate()).slice(-2);
+})();
+
+// ===== ホームデータ更新 =====
+function homeRefresh() {
+  // TODAY/DATE ラベル切替
+  var todayStr = (function() {
+    var n = new Date();
+    return n.getFullYear() + '-' + ('0'+(n.getMonth()+1)).slice(-2) + '-' + ('0'+n.getDate()).slice(-2);
+  })();
+  var lbl = document.getElementById('home-date-label');
+  if (lbl) lbl.textContent = (homeSelectedDate === todayStr) ? 'TODAY' : 'DATE';
+
+  document.getElementById('home-loading').style.display = 'block';
+  document.getElementById('home-content').style.display = 'none';
+  ['home-training-card','home-condition-card','home-cardio-card','home-meal-card','home-care-card','home-empty'].forEach(function(id) {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      document.getElementById('home-loading').style.display = 'none';
+      document.getElementById('home-content').style.display = 'block';
+
+      if (!res || !res.success) {
+        document.getElementById('home-empty').style.display = 'block';
+        return;
+      }
+
+      // 日付表示
+      var parts = res.today.split('-');
+      var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      var days = ['日','月','火','水','木','金','土'];
+      document.getElementById('home-date-main').textContent =
+        (d.getMonth() + 1) + '月' + d.getDate() + '日（' + days[d.getDay()] + '）';
+
+      var hasData = false;
+
+      // 筋トレサマリー
+      if (res.training) {
+        hasData = true;
+        document.getElementById('home-training-card').style.display = 'block';
+        document.getElementById('home-training-stats').textContent =
+          res.training.exerciseCount + '種目・' + res.training.totalSets + 'セット';
+        document.getElementById('home-training-exercises').textContent =
+          res.training.exercises.join(' · ');
+      }
+
+      // 体調サマリー
+      if (res.condition) {
+        hasData = true;
+        document.getElementById('home-condition-card').style.display = 'block';
+        var condItems = [];
+        if (res.condition.weight)    condItems.push(['体重',   res.condition.weight + ' kg']);
+        if (res.condition.fatigue)   condItems.push(['疲労度', res.condition.fatigue + ' / 10']);
+        if (res.condition.condition) condItems.push(['体調',   res.condition.condition]);
+        if (res.condition.mood)      condItems.push(['気分',   res.condition.mood]);
+        var condEl = document.getElementById('home-condition-stats');
+        condEl.innerHTML = '';
+        condItems.forEach(function(item) {
+          var row = document.createElement('div');
+          row.className = 'home-condition-item';
+          var lbl = document.createElement('span');
+          lbl.className = 'home-condition-label';
+          lbl.textContent = item[0];
+          var val = document.createElement('span');
+          val.className = 'home-condition-val';
+          val.textContent = item[1];
+          row.appendChild(lbl);
+          row.appendChild(val);
+          condEl.appendChild(row);
+        });
+      }
+
+      // 有酸素サマリー
+      if (res.cardio && res.cardio.length > 0) {
+        hasData = true;
+        document.getElementById('home-cardio-card').style.display = 'block';
+        var cardioEl = document.getElementById('home-cardio-stats');
+        cardioEl.innerHTML = '';
+        res.cardio.forEach(function(c) {
+          var row = document.createElement('div');
+          row.className = 'home-condition-item';
+          var parts = [];
+          if (c.type)     parts.push(c.type);
+          if (c.duration) parts.push(c.duration + '分');
+          if (c.distance) parts.push(c.distance + 'km');
+          if (c.calories) parts.push(c.calories + 'kcal');
+          row.textContent = parts.join(' · ') || '記録あり';
+          cardioEl.appendChild(row);
+        });
+      }
+
+      // 食事サマリー
+      if (res.meal) {
+        hasData = true;
+        document.getElementById('home-meal-card').style.display = 'block';
+        var mealEl = document.getElementById('home-meal-stats');
+        mealEl.innerHTML = '';
+        var mealItems = [];
+        if (res.meal.protein)  mealItems.push(['タンパク質', res.meal.protein + 'g']);
+        if (res.meal.calories) mealItems.push(['カロリー',   res.meal.calories + 'kcal']);
+        if (res.meal.water)    mealItems.push(['水分',       res.meal.water + 'ml']);
+        mealItems.forEach(function(item) {
+          var row = document.createElement('div');
+          row.className = 'home-condition-item';
+          var lbl = document.createElement('span');
+          lbl.className = 'home-condition-label';
+          lbl.textContent = item[0];
+          var val = document.createElement('span');
+          val.className = 'home-condition-val';
+          val.textContent = item[1];
+          row.appendChild(lbl);
+          row.appendChild(val);
+          mealEl.appendChild(row);
+        });
+        var memos = [];
+        if (res.meal.preMeal)  memos.push('トレ前: ' + res.meal.preMeal);
+        if (res.meal.postMeal) memos.push('トレ後: ' + res.meal.postMeal);
+        if (res.meal.memo)     memos.push(res.meal.memo);
+        memos.forEach(function(m) {
+          var div = document.createElement('div');
+          div.style.cssText = 'font-size:12px;color:var(--text-sub);margin-top:4px;padding:4px 0';
+          div.textContent = m;
+          mealEl.appendChild(div);
+        });
+      }
+
+      // ケアサマリー
+      if (res.care) {
+        var careItems = [];
+        if (res.care.stretch    === 'はい') careItems.push('ストレッチ');
+        if (res.care.foamRoller === 'はい') careItems.push('筋膜リリース');
+        if (res.care.cardio)               careItems.push(res.care.cardio);
+        if (res.care.otherCare)            careItems.push(res.care.otherCare);
+        if (careItems.length > 0) {
+          hasData = true;
+          document.getElementById('home-care-card').style.display = 'block';
+          var careEl = document.getElementById('home-care-stats');
+          careEl.innerHTML = '';
+          var row = document.createElement('div');
+          row.className = 'home-condition-item';
+          row.textContent = careItems.join(' · ');
+          careEl.appendChild(row);
+          if (res.care.memo) {
+            var memoDiv = document.createElement('div');
+            memoDiv.style.cssText = 'font-size:12px;color:var(--text-sub);margin-top:4px;padding:4px 0';
+            memoDiv.textContent = res.care.memo;
+            careEl.appendChild(memoDiv);
+          }
+        }
+      }
+
+      if (!hasData) {
+        document.getElementById('home-empty').style.display = 'block';
+      }
+    })
+    .withFailureHandler(function() {
+      document.getElementById('home-loading').style.display = 'none';
+      document.getElementById('home-content').style.display = 'block';
+      document.getElementById('home-empty').style.display = 'block';
+    })
+    .getHomeData(homeSelectedDate);
+}
+
+homeRefresh();
+
+// ===== 日付ピッカー初期化 =====
+(function() {
+  var picker = document.getElementById('home-date-picker');
+  if (!picker) return;
+  // 今日を最大値・初期値に設定
+  picker.max = homeSelectedDate;
+  picker.value = homeSelectedDate;
+  picker.addEventListener('change', function() {
+    var val = this.value;
+    if (!val) return;
+    homeSelectedDate = val;
+    homeRefresh();
+  });
+})();
+
+function homeDebug() {
+  var panel = document.getElementById('home-debug-panel');
+  panel.style.display = 'block';
+  panel.textContent = '読み込み中…';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { panel.textContent = 'エラー: ' + res.error; return; }
+      var d = res.data;
+      var lines = ['=== 筋トレ記録シート（最新20件）==='];
+      d.trainingRows.forEach(function(r) {
+        lines.push('[' + r.date + '] ' + r.name + ' セット数=' + r.sets + ' ID=' + r.id);
+      });
+      lines.push('');
+      lines.push('=== セット詳細シート（最新60件）===');
+      d.setRows.forEach(function(r) {
+        lines.push('セット' + r.setNum + ' ' + r.weight + 'kg×' + r.reps + '回 / TR=' + r.trainingId);
+      });
+      lines.push('');
+      lines.push('記録行数:' + d.trainingTotal + ' セット行数:' + d.setTotal);
+      panel.textContent = lines.join('\n');
+    })
+    .withFailureHandler(function(e) { panel.textContent = '失敗: ' + e.message; })
+    .debugGetTrainingRawData();
+}
+</script>

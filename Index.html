@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <?!= include('Style') ?>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header class="app-header">
+    <h1 id="page-title">ホーム</h1>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="app-main">
+
+    <!-- ホーム画面 -->
+    <section id="page-home" class="page active">
+      <?!= include('PageHome') ?>
+    </section>
+
+    <!-- 記録画面 -->
+    <section id="page-record" class="page">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="showSubTab('training', this)">筋トレ</button>
+        <button class="sub-tab"        onclick="showSubTab('cardio',   this)">有酸素</button>
+        <button class="sub-tab"        onclick="showSubTab('condition',this)">体調</button>
+        <button class="sub-tab"        onclick="showSubTab('meal',     this)">食事</button>
+        <button class="sub-tab"        onclick="showSubTab('care',     this)">ケア</button>
+      </div>
+
+      <div id="sub-training" class="sub-page active">
+        <?!= include('PageTraining') ?>
+      </div>
+
+      <div id="sub-cardio" class="sub-page">
+        <div id="cardio-tabs" class="body-tabs" style="margin-bottom:12px">
+          <button class="body-tab active" onclick="showCardioTab('record', this)">記録する</button>
+          <button class="body-tab" onclick="showCardioTab('history', this)">履歴</button>
+        </div>
+        <div id="cardio-pane-record" class="tr-pane active">
+
+          <!-- 保存結果メッセージ -->
+          <div class="save-result" id="cardio-result"></div>
+
+          <!-- 日付 -->
+          <div class="form-section">
+            <div class="form-section-title">📅 日付</div>
+            <input type="date" id="cardio-date" class="form-input" style="width:100%; font-size:18px;">
+          </div>
+
+          <!-- 種目 -->
+          <div class="form-section">
+            <div class="form-section-title">🏃 種目</div>
+            <div class="choice-group" id="cardio-type-group">
+              <button class="choice-btn" onclick="cardioSelectType('ウォーキング',this)">🚶 ウォーキング</button>
+              <button class="choice-btn" onclick="cardioSelectType('ランニング',this)">🏃 ランニング</button>
+              <button class="choice-btn" onclick="cardioSelectType('サイクリング',this)">🚴 サイクリング</button>
+              <button class="choice-btn" onclick="cardioSelectType('水泳',this)">🏊 水泳</button>
+            </div>
+            <input type="text" id="cardio-type-other" class="form-input"
+                   style="margin-top:10px"
+                   placeholder="上記以外（例：縄跳び、エリプティカル）"
+                   oninput="cardioTypeOtherInput(this)">
+          </div>
+
+          <!-- 計測値 -->
+          <div class="form-section">
+            <div class="form-section-title">📊 計測値</div>
+            <div class="form-row">
+              <label class="form-label">時間</label>
+              <input type="number" id="cardio-duration" class="form-input"
+                     placeholder="30" step="1" min="0">
+              <span class="form-unit">分</span>
+            </div>
+            <div class="form-row">
+              <label class="form-label">距離</label>
+              <input type="number" id="cardio-distance" class="form-input"
+                     placeholder="3.0" step="0.1" min="0">
+              <span class="form-unit">km</span>
+            </div>
+            <div class="form-row">
+              <label class="form-label">速度</label>
+              <input type="number" id="cardio-speed" class="form-input"
+                     placeholder="6.0" step="0.1" min="0">
+              <span class="form-unit">km/h</span>
+            </div>
+            <div class="form-row">
+              <label class="form-label">傾斜</label>
+              <input type="number" id="cardio-slope" class="form-input"
+                     placeholder="0" step="0.5" min="0">
+              <span class="form-unit">%</span>
+            </div>
+            <div class="form-row" style="margin-bottom:0">
+              <label class="form-label">カロリー</label>
+              <input type="number" id="cardio-calories" class="form-input"
+                     placeholder="200" step="1" min="0">
+              <span class="form-unit">kcal</span>
+            </div>
+          </div>
+
+          <!-- メモ -->
+          <div class="form-section">
+            <div class="form-section-title">📝 メモ <span style="font-weight:400;color:#aaa">（任意）</span></div>
+            <textarea id="cardio-memo" class="form-textarea"
+                      placeholder="コース、体感など"></textarea>
+          </div>
+
+          <!-- 保存ボタン -->
+          <button class="btn btn-primary" id="cardio-save-btn" onclick="cardioSave()">
+            💾 保存する
+          </button>
+          <div style="height:24px"></div>
+        </div>
+        <div id="cardio-pane-history" class="tr-pane">
+          <div id="cardio-hist-list">
+            <div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>
+          </div>
+          <div style="height:24px"></div>
+        </div>
+      </div>
+
+      <div id="sub-condition" class="sub-page">
+        <?!= include('PageCondition') ?>
+      </div>
+
+      <div id="sub-meal" class="sub-page">
+        <?!= include('PageMeal') ?>
+      </div>
+
+      <div id="sub-care" class="sub-page">
+        <?!= include('PageCare') ?>
+      </div>
+    </section>
+
+    <!-- タイマー画面 -->
+    <section id="page-timer" class="page">
+      <?!= include('PageTimer') ?>
+    </section>
+
+    <!-- 身体データ管理画面 -->
+    <section id="page-history" class="page">
+      <?!= include('PageBody') ?>
+    </section>
+
+    <!-- AI分析画面 -->
+    <section id="page-ai" class="page">
+      <?!= include('PageAI') ?>
+    </section>
+
+  </main>
+
+  <!-- ボトムナビゲーション -->
+  <nav class="bottom-nav">
+    <button id="nav-btn-home" class="nav-btn active" onclick="showPage('home', 'ホーム', this)">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">ホーム</span>
+    </button>
+    <button id="nav-btn-record" class="nav-btn" onclick="showPage('record', '記録する', this)">
+      <span class="nav-icon">📝</span>
+      <span class="nav-label">記録</span>
+    </button>
+    <button id="nav-btn-timer" class="nav-btn" onclick="showPage('timer', 'タイマー', this)">
+      <span class="nav-icon">⏱️</span>
+      <span class="nav-label">タイマー</span>
+    </button>
+    <button id="nav-btn-history" class="nav-btn" onclick="showPage('history', '身体データ', this)">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">身体</span>
+    </button>
+    <button id="nav-btn-ai" class="nav-btn" onclick="showPage('ai', 'AI分析', this)">
+      <span class="nav-icon">🤖</span>
+      <span class="nav-label">AI分析</span>
+    </button>
+  </nav>
+
+  <script>
+    /* ===== グローバルトースト通知 ===== */
+    function showToast(msg, type) {
+      var el = document.getElementById('app-toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'app-toast ' + (type || 'success');
+      void el.offsetHeight; // reflow でトランジションをリセット
+      el.classList.add('show');
+      clearTimeout(el._t);
+      el._t = setTimeout(function() { el.classList.remove('show'); }, 2800);
+    }
+
+    function showPage(name, title, btn) {
+      document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+      document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+      document.getElementById('page-' + name).classList.add('active');
+      document.getElementById('page-title').textContent = title;
+      btn.classList.add('active');
+      if (name === 'home'    && typeof homeRefresh  === 'function') homeRefresh();
+      if (name === 'history') {
+        if (typeof bodyResetView === 'function') bodyResetView();
+        if (typeof bodyInit      === 'function') bodyInit();
+      }
+      if (name === 'ai'      && typeof aiInit       === 'function') aiInit();
+    }
+
+    function showSubTab(name, btn) {
+      document.querySelectorAll('.sub-page').forEach(function(p) { p.classList.remove('active'); });
+      document.querySelectorAll('.sub-tab').forEach(function(b) { b.classList.remove('active'); });
+      document.getElementById('sub-' + name).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    // ===== 有酸素履歴 =====
+    var cardioHistLoaded  = false;
+    var cardioHistRecords = [];
+
+    function showCardioTab(name, btn) {
+      document.querySelectorAll('#cardio-tabs .body-tab').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('#cardio-pane-record, #cardio-pane-history').forEach(function(p) { p.classList.remove('active'); });
+      document.getElementById('cardio-pane-' + name).classList.add('active');
+      btn.classList.add('active');
+      if (name === 'history') cardioLoadHistory();
+    }
+
+    function cardioLoadHistory() {
+      if (cardioHistLoaded) { cardioRenderHistory(cardioHistRecords); return; }
+      document.getElementById('cardio-hist-list').innerHTML =
+        '<div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>';
+      google.script.run
+        .withSuccessHandler(function(res) {
+          cardioHistLoaded = true;
+          if (res && res.success) cardioHistRecords = res.records;
+          cardioRenderHistory(cardioHistRecords);
+        })
+        .withFailureHandler(function() {
+          document.getElementById('cardio-hist-list').innerHTML =
+            '<div style="text-align:center;padding:32px;color:#C62828">読み込みに失敗しました</div>';
+        })
+        .getCardioHistory();
+    }
+
+    function cardioRenderHistory(records) {
+      var list = document.getElementById('cardio-hist-list');
+      if (!records || records.length === 0) {
+        list.innerHTML = '<div class="placeholder-card" style="margin-top:0"><div class="icon">🚴</div><div class="title">記録がありません</div><div class="desc">有酸素運動を記録すると<br>ここに履歴が表示されます</div></div>';
+        return;
+      }
+      var html = '';
+      records.forEach(function(r, si) {
+        var dateLabel = r.date.replace(/-/g, '/');
+        var summary = [];
+        if (r.type)     summary.push(r.type);
+        if (r.duration) summary.push(r.duration + '分');
+        if (r.distance) summary.push(r.distance + 'km');
+
+        html += '<div class="tr-hist-card">';
+        html += '<div class="tr-hist-header" onclick="cardioHistToggle(' + si + ')">';
+        html += '<div style="min-width:0;flex:1">';
+        html += '<div class="tr-hist-date">' + dateLabel + '</div>';
+        html += '<div class="tr-hist-summary">' + cardioEsc(summary.join(' · ') || '-') + '</div>';
+        html += '</div>';
+        html += '<button class="edit-hist-btn" onclick="event.stopPropagation();cardioEditOpen(' + si + ')">編集</button>';
+        html += '<span class="tr-hist-arrow" id="cardio-hist-arrow-' + si + '" style="margin-left:8px">▶</span>';
+        html += '</div>';
+
+        html += '<div id="cardio-hist-detail-' + si + '" class="tr-hist-detail">';
+        var fields = [];
+        if (r.type)     fields.push(['種目', r.type]);
+        if (r.duration) fields.push(['時間', r.duration + '分']);
+        if (r.distance) fields.push(['距離', r.distance + 'km']);
+        if (r.speed)    fields.push(['速度', r.speed + 'km/h']);
+        if (r.calories) fields.push(['カロリー', r.calories + 'kcal']);
+        if (fields.length > 0) {
+          html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0">';
+          fields.forEach(function(f) {
+            html += '<div style="background:#F5F7FA;border-radius:8px;padding:8px 12px">';
+            html += '<div style="font-size:11px;color:var(--text-sub);margin-bottom:2px">' + f[0] + '</div>';
+            html += '<div style="font-size:15px;font-weight:700">' + cardioEsc(f[1]) + '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+        if (r.memo) html += '<div style="font-size:12px;color:var(--text-sub);margin-top:8px">' + cardioEsc(r.memo) + '</div>';
+        html += '</div></div>';
+      });
+      list.innerHTML = html;
+    }
+
+    function cardioHistToggle(si) {
+      var d = document.getElementById('cardio-hist-detail-' + si);
+      var a = document.getElementById('cardio-hist-arrow-' + si);
+      var open = d.style.display === 'block';
+      d.style.display = open ? 'none' : 'block';
+      a.textContent   = open ? '▶' : '▼';
+    }
+
+    function cardioEsc(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ===== 有酸素運動 フォーム =====
+    var cardioTypeSel = null;
+
+    function cardioSelectType(type, btn) {
+      document.querySelectorAll('#cardio-type-group .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      cardioTypeSel = type;
+      document.getElementById('cardio-type-other').value = '';
+    }
+
+    function cardioTypeOtherInput(input) {
+      if (input.value.trim()) {
+        document.querySelectorAll('#cardio-type-group .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+        cardioTypeSel = null;
+      }
+    }
+
+    function cardioSave() {
+      var date = document.getElementById('cardio-date').value;
+      if (!date) { showCardioResult('error', '日付を入力してください'); return; }
+
+      var type = document.getElementById('cardio-type-other').value.trim() || cardioTypeSel || '';
+
+      var data = {
+        date:     date,
+        type:     type,
+        duration: document.getElementById('cardio-duration').value,
+        distance: document.getElementById('cardio-distance').value,
+        speed:    document.getElementById('cardio-speed').value,
+        slope:    document.getElementById('cardio-slope').value,
+        calories: document.getElementById('cardio-calories').value,
+        memo:     document.getElementById('cardio-memo').value
+      };
+
+      var btn = document.getElementById('cardio-save-btn');
+      btn.textContent = '保存中…';
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.textContent = '💾 保存する';
+          btn.disabled = false;
+          if (res && res.success) {
+            showCardioResult('success', '有酸素運動を記録しました！');
+            cardioHistLoaded = false;
+            cardioReset();
+          } else {
+            showCardioResult('error', 'エラー: ' + (res ? res.error : '不明'));
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.textContent = '💾 保存する';
+          btn.disabled = false;
+          showCardioResult('error', '保存に失敗しました: ' + (err.message || ''));
+        })
+        .saveCardioData(data);
+    }
+
+    function cardioReset() {
+      cardioTypeSel = null;
+      document.querySelectorAll('#cardio-type-group .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+      ['cardio-type-other','cardio-duration','cardio-distance','cardio-speed','cardio-slope','cardio-calories','cardio-memo'].forEach(function(id) {
+        document.getElementById(id).value = '';
+      });
+      var t = new Date();
+      document.getElementById('cardio-date').value =
+        t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+    }
+
+    function showCardioResult(type, message) {
+      var el = document.getElementById('cardio-result');
+      el.className = 'save-result ' + type;
+      el.textContent = message;
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ===== 有酸素 編集モーダル =====
+    var _cardioEditIdx = -1;
+    var _cardioTypeSelEdit = null;
+
+    function cardioEditOpen(si) {
+      var r = cardioHistRecords[si];
+      if (!r) return;
+      _cardioEditIdx = si;
+      _cardioTypeSelEdit = r.type || '';
+
+      document.getElementById('ce-date').value     = r.date     || '';
+      document.getElementById('ce-duration').value = r.duration || '';
+      document.getElementById('ce-distance').value = r.distance || '';
+      document.getElementById('ce-speed').value    = r.speed    || '';
+      document.getElementById('ce-slope').value    = r.slope    || '';
+      document.getElementById('ce-calories').value = r.calories || '';
+      document.getElementById('ce-memo').value     = r.memo     || '';
+
+      // 種目ボタン復元
+      document.querySelectorAll('#ce-type-group .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+      document.getElementById('ce-type-other').value = '';
+      var knownTypes = ['ウォーキング','ランニング','サイクリング','水泳'];
+      if (knownTypes.indexOf(r.type) >= 0) {
+        document.querySelectorAll('#ce-type-group .choice-btn').forEach(function(b) {
+          if (b.dataset.type === r.type) b.classList.add('selected');
+        });
+      } else {
+        document.getElementById('ce-type-other').value = r.type || '';
+      }
+
+      var res = document.getElementById('ce-result');
+      res.className = 'edit-result';
+      res.textContent = '';
+      document.getElementById('cardio-edit-modal').style.display = 'flex';
+    }
+
+    function cardioEditClose() {
+      document.getElementById('cardio-edit-modal').style.display = 'none';
+      _cardioEditIdx = -1;
+    }
+
+    function cardioEditBgClick(e) {
+      if (e.target === document.getElementById('cardio-edit-modal')) cardioEditClose();
+    }
+
+    function cardioEditTypeSelect(type, btn) {
+      document.querySelectorAll('#ce-type-group .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      _cardioTypeSelEdit = type;
+      document.getElementById('ce-type-other').value = '';
+    }
+
+    function cardioEditTypeOther(input) {
+      if (input.value.trim()) {
+        document.querySelectorAll('#ce-type-group .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+        _cardioTypeSelEdit = null;
+      }
+    }
+
+    function cardioEditSave() {
+      var r = cardioHistRecords[_cardioEditIdx];
+      if (!r || !r.id) { _ceShowResult('error', 'IDが見つかりません'); return; }
+      var date = document.getElementById('ce-date').value;
+      if (!date) { _ceShowResult('error', '日付を入力してください'); return; }
+      var type = document.getElementById('ce-type-other').value.trim() || _cardioTypeSelEdit || '';
+      var data = {
+        id:       r.id,
+        date:     date,
+        type:     type,
+        duration: document.getElementById('ce-duration').value,
+        distance: document.getElementById('ce-distance').value,
+        speed:    document.getElementById('ce-speed').value,
+        slope:    document.getElementById('ce-slope').value,
+        calories: document.getElementById('ce-calories').value,
+        memo:     document.getElementById('ce-memo').value
+      };
+      var btn = document.getElementById('ce-save-btn');
+      btn.textContent = '保存中…'; btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.textContent = '変更を保存'; btn.disabled = false;
+          if (res && res.success) {
+            cardioHistLoaded = false;
+            cardioEditClose();
+            cardioLoadHistory();
+            if (typeof homeRefresh === 'function') homeRefresh();
+            showToast('✓ 変更しました', 'success');
+          } else {
+            console.error('updateCardioRecord error:', res ? res.error : '不明');
+            _ceShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.textContent = '変更を保存'; btn.disabled = false;
+          console.error('updateCardioRecord failure:', err);
+          _ceShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+        })
+        .updateCardioRecord(data);
+    }
+
+    function _ceShowResult(type, msg) {
+      var el = document.getElementById('ce-result');
+      el.className = 'edit-result ' + type;
+      el.textContent = msg;
+    }
+
+    // ===== フォーム日付の初期化 =====
+    (function() {
+      var t = new Date();
+      var today = t.getFullYear() + '-' +
+        String(t.getMonth() + 1).padStart(2, '0') + '-' +
+        String(t.getDate()).padStart(2, '0');
+      var cd = document.getElementById('cardio-date');
+      if (cd) cd.value = today;
+    })();
+  </script>
+
+<!-- 有酸素 編集モーダル -->
+<div id="cardio-edit-modal" class="edit-modal" style="display:none" onclick="cardioEditBgClick(event)">
+  <div class="edit-modal-sheet">
+    <div class="edit-modal-header">
+      <span class="edit-modal-title">有酸素記録を編集</span>
+      <button class="edit-modal-close" onclick="cardioEditClose()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <div class="edit-result" id="ce-result"></div>
+      <button class="btn-edit-save-top" onclick="cardioEditSave()">変更を保存</button>
+      <div class="form-section">
+        <div class="form-section-title">📅 日付</div>
+        <input type="date" id="ce-date" class="form-input" style="width:100%;font-size:16px">
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">🏃 種目</div>
+        <div class="choice-group" id="ce-type-group">
+          <button class="choice-btn" data-type="ウォーキング" onclick="cardioEditTypeSelect('ウォーキング',this)">🚶 ウォーキング</button>
+          <button class="choice-btn" data-type="ランニング"   onclick="cardioEditTypeSelect('ランニング',this)">🏃 ランニング</button>
+          <button class="choice-btn" data-type="サイクリング" onclick="cardioEditTypeSelect('サイクリング',this)">🚴 サイクリング</button>
+          <button class="choice-btn" data-type="水泳"         onclick="cardioEditTypeSelect('水泳',this)">🏊 水泳</button>
+        </div>
+        <input type="text" id="ce-type-other" class="form-input" style="margin-top:10px"
+               placeholder="上記以外" oninput="cardioEditTypeOther(this)">
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">📊 計測値</div>
+        <div class="form-row"><label class="form-label">時間</label>
+          <input type="number" id="ce-duration" class="form-input" placeholder="30" step="1" min="0">
+          <span class="form-unit">分</span></div>
+        <div class="form-row"><label class="form-label">距離</label>
+          <input type="number" id="ce-distance" class="form-input" placeholder="3.0" step="0.1" min="0">
+          <span class="form-unit">km</span></div>
+        <div class="form-row"><label class="form-label">速度</label>
+          <input type="number" id="ce-speed" class="form-input" placeholder="6.0" step="0.1" min="0">
+          <span class="form-unit">km/h</span></div>
+        <div class="form-row"><label class="form-label">傾斜</label>
+          <input type="number" id="ce-slope" class="form-input" placeholder="0" step="0.5" min="0">
+          <span class="form-unit">%</span></div>
+        <div class="form-row" style="margin-bottom:0"><label class="form-label">カロリー</label>
+          <input type="number" id="ce-calories" class="form-input" placeholder="200" step="1" min="0">
+          <span class="form-unit">kcal</span></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">📝 メモ</div>
+        <textarea id="ce-memo" class="form-textarea" placeholder="コース、体感など"></textarea>
+      </div>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-edit-cancel" onclick="cardioEditClose()">キャンセル</button>
+      <button class="btn-edit-save" id="ce-save-btn" onclick="cardioEditSave()">変更を保存</button>
+    </div>
+  </div>
+</div>
+<div id="app-toast" class="app-toast"></div>
+</body>
+</html>

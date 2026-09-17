@@ -1,0 +1,1497 @@
+<!-- 身体データ管理 -->
+
+<!-- 内部タブ -->
+<div class="body-tabs">
+  <button class="body-tab active" id="body-tab-record"
+          onclick="showBodyTab('record', this)">記録する</button>
+  <button class="body-tab" id="body-tab-history"
+          onclick="showBodyTab('history', this)">履歴</button>
+  <button class="body-tab" id="body-tab-compare"
+          onclick="showBodyTab('compare', this)">比較</button>
+</div>
+
+<!-- ===== 記録タブ ===== -->
+<div id="body-pane-record" class="body-pane active">
+
+  <!-- 保存結果メッセージ -->
+  <div class="save-result" id="body-result"></div>
+
+  <!-- 前回の記録（ロード後に表示） -->
+  <div id="body-prev-card"></div>
+
+  <!-- 日付 -->
+  <div class="form-section">
+    <div class="form-section-title">📅 日付</div>
+    <input type="date" id="body-date" class="form-input" style="width:100%; font-size:18px;">
+  </div>
+
+  <!-- 身体データ入力 -->
+  <div class="form-section">
+    <div class="form-section-title">📏 身体データ</div>
+    <div class="form-row">
+      <label class="form-label">体重</label>
+      <input type="number" id="body-weight" class="form-input"
+             placeholder="70.0" step="0.1" min="0" max="300">
+      <span class="form-unit">kg</span>
+    </div>
+    <div class="form-row">
+      <label class="form-label">胸囲</label>
+      <input type="number" id="body-chest" class="form-input"
+             placeholder="95.0" step="0.1" min="0">
+      <span class="form-unit">cm</span>
+    </div>
+    <div class="form-row">
+      <label class="form-label">ウエスト</label>
+      <input type="number" id="body-waist" class="form-input"
+             placeholder="80.0" step="0.1" min="0">
+      <span class="form-unit">cm</span>
+    </div>
+    <div class="form-row">
+      <label class="form-label">ヒップ</label>
+      <input type="number" id="body-hip" class="form-input"
+             placeholder="90.0" step="0.1" min="0">
+      <span class="form-unit">cm</span>
+    </div>
+    <div class="form-row" style="margin-bottom:0">
+      <label class="form-label">太もも</label>
+      <input type="number" id="body-thigh" class="form-input"
+             placeholder="55.0" step="0.1" min="0">
+      <span class="form-unit">cm</span>
+    </div>
+  </div>
+
+  <!-- 写真記録 -->
+  <div class="form-section">
+    <div class="form-section-title">📸 写真記録 <span style="font-weight:400;color:#aaa">（任意）</span></div>
+
+    <!-- ファイル選択（新規記録用） -->
+    <input type="file" id="body-photo-input" accept="image/*"
+           style="display:none" onchange="bodyPhotoSelected(this)">
+
+    <!-- プレビューエリア -->
+    <div id="body-photo-preview-wrap" style="display:none; margin-bottom:12px">
+      <img id="body-photo-preview"
+           style="width:100%; max-height:220px; object-fit:cover; border-radius:10px; border:2px solid var(--border); display:block;">
+      <button onclick="bodyRemovePhoto()"
+              style="margin-top:10px; width:100%; border:none; border-radius:10px; padding:12px; font-size:15px; font-weight:600; cursor:pointer; background:#F5F5F5; color:#666;">
+        ✕ 写真を削除
+      </button>
+      <!-- 部位選択（写真選択時に表示） -->
+      <div style="margin-top:12px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px">
+          <div style="font-size:13px; font-weight:600; color:var(--text-sub)">🏷 写真の部位</div>
+          <button onclick="bodyPartMasterOpen()" style="font-size:12px;color:var(--primary);background:none;border:none;cursor:pointer;padding:2px 6px;font-weight:600;">⚙ 部位を管理</button>
+        </div>
+        <select id="body-new-photo-part-select" class="body-compare-select"></select>
+      </div>
+    </div>
+
+    <!-- 写真を追加ボタン -->
+    <button id="body-photo-btn"
+            onclick="document.getElementById('body-photo-input').click()"
+            style="width:100%; border:2px dashed var(--border); border-radius:12px; padding:20px; font-size:17px; font-weight:700; cursor:pointer; background:#FAFAFA; color:var(--primary); display:flex; align-items:center; justify-content:center; gap:8px;">
+      <span style="font-size:24px">📸</span> 写真を追加
+    </button>
+    <div style="font-size:12px; color:var(--text-sub); margin-top:8px; text-align:center; line-height:1.6">
+      スマホの写真ライブラリから選択できます<br>
+      写真はGoogleドライブに保存されます
+    </div>
+  </div>
+
+  <!-- メモ -->
+  <div class="form-section">
+    <div class="form-section-title">📝 メモ <span style="font-weight:400;color:#aaa">（任意）</span></div>
+    <textarea id="body-memo" class="form-textarea"
+              placeholder="気づき・特記事項など"></textarea>
+  </div>
+
+  <!-- 保存ボタン -->
+  <button class="btn btn-primary" id="body-save-btn" onclick="bodySave()">
+    💾 保存する
+  </button>
+
+  <!-- 保存後の前回比較 -->
+  <div id="body-after-save" style="display:none; margin-top:12px">
+    <div id="body-diff-display"></div>
+  </div>
+
+  <div style="height:24px"></div>
+</div>
+
+<!-- ===== 履歴タブ ===== -->
+<div id="body-pane-history" class="body-pane">
+  <!-- 写真変更・追加用ファイル入力（履歴カードから共用） -->
+  <input type="file" id="body-history-photo-input" accept="image/*"
+         style="display:none" onchange="bodyHistoryPhotoSelected(this)">
+
+  <!-- 部位管理ボタン -->
+  <div style="padding:6px 0 2px; text-align:right">
+    <button onclick="bodyPartMasterOpen()"
+            style="font-size:13px;color:var(--primary);background:none;border:none;cursor:pointer;padding:4px 8px;font-weight:600">
+      ⚙ 部位を管理
+    </button>
+  </div>
+
+  <div id="body-history-list">
+    <div style="text-align:center; padding:48px 16px; color:var(--text-sub); font-size:15px">
+      読み込み中…
+    </div>
+  </div>
+</div>
+
+<!-- ===== 比較タブ ===== -->
+<div id="body-pane-compare" class="body-pane">
+  <div id="body-compare-content">
+    <div style="text-align:center; padding:48px 16px; color:var(--text-sub); font-size:15px">
+      読み込み中…
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 身体データ管理 状態 =====
+var bodyPrevRecord  = null;
+var bodyAllRecords  = [];
+var bodyDataLoaded  = false;
+var bodyPartsList   = [];
+var bodyAllPhotos   = {};
+var bodyPhotoSysReady = false;
+var bodyComparePartId = '';
+
+var bodySelectedPhotoBase64 = null;
+var bodySelectedPhotoMime   = null;
+var bodySelectedPhotoName   = null;
+
+// 写真変更（履歴カード）用
+var _bodyChgPhotoId       = '';
+var _bodyChgPhotoRecordId = '';
+var _bodyChgPhotoIsLegacy = false;
+
+// 写真追加モーダル用
+var _bodyAddRecordId = '';
+var _bodyAddDate     = '';
+var _bodyAddBase64   = null;
+var _bodyAddMime     = null;
+var _bodyAddFilename = '';
+
+// 写真削除確認モーダル用
+var _bodyDelPhotoId    = '';
+var _bodyDelRecordId   = '';
+var _bodyDelIsLegacy   = false;
+
+// ロード中フラグ・コールバックキュー
+var _bodyLoadInProgress = false;
+var _bodyLoadCallbacks  = [];
+
+var BODY_FIELDS = [
+  { key: 'weight', label: '体重',    unit: 'kg' },
+  { key: 'chest',  label: '胸囲',    unit: 'cm' },
+  { key: 'waist',  label: 'ウエスト', unit: 'cm' },
+  { key: 'hip',    label: 'ヒップ',  unit: 'cm' },
+  { key: 'thigh',  label: '太もも',  unit: 'cm' }
+];
+
+// 今日の日付を自動セット
+(function() {
+  var t = new Date();
+  document.getElementById('body-date').value =
+    t.getFullYear() + '-' +
+    String(t.getMonth() + 1).padStart(2, '0') + '-' +
+    String(t.getDate()).padStart(2, '0');
+})();
+
+// ===== データ一括ロード =====
+function _bodyLoadAll(callback) {
+  if (callback) _bodyLoadCallbacks.push(callback);
+  if (_bodyLoadInProgress) return;
+  _bodyLoadInProgress = true;
+  var pending = 2;
+  function done() {
+    pending--;
+    if (pending <= 0) {
+      bodyDataLoaded = true;
+      _bodyLoadInProgress = false;
+      var cbs = _bodyLoadCallbacks.slice();
+      _bodyLoadCallbacks = [];
+      cbs.forEach(function(cb) { try { cb(); } catch(e) {} });
+    }
+  }
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.success) {
+        bodyAllRecords = res.records;
+        if (res.records.length > 0) bodyPrevRecord = res.records[0];
+      }
+      done();
+    })
+    .withFailureHandler(function() { done(); })
+    .getBodyHistory();
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.success) {
+        bodyPartsList = res.parts || [];
+        bodyAllPhotos = res.photos || {};
+        bodyPhotoSysReady = true;
+      }
+      done();
+    })
+    .withFailureHandler(function() { done(); })
+    .getBodyPhotoSystemData();
+}
+
+// ===== ページが表示されたとき =====
+function bodyInit() {
+  if (bodyDataLoaded) return;
+  _bodyLoadAll(function() {
+    bodyRenderPrevCard();
+    // 写真プレビューが表示中なら部位セレクトも更新
+    var wrap = document.getElementById('body-photo-preview-wrap');
+    if (wrap && wrap.style.display !== 'none') _bodyPopulateNewPhotoPartSelect();
+  });
+}
+
+// ===== タブ切り替え =====
+function showBodyTab(name, btn) {
+  document.querySelectorAll('.body-pane').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.body-tab').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('body-pane-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'history') bodyRenderHistory();
+  if (name === 'compare') bodyRenderCompareTab();
+}
+
+// ===== 前回記録カードの描画 =====
+function bodyRenderPrevCard() {
+  var p = bodyPrevRecord;
+  if (!p) return;
+  var dateLabel = p.date ? p.date.replace(/-/g, '/') : '—';
+  var rows = BODY_FIELDS.filter(function(f) {
+    return p[f.key] !== '' && p[f.key] !== null && p[f.key] !== undefined;
+  });
+  if (rows.length === 0) return;
+
+  var html = '<div class="body-diff-card" style="margin-bottom:12px">'
+    + '<div class="body-diff-title">📊 前回の記録（' + dateLabel + '）</div>';
+  rows.forEach(function(f) {
+    html += '<div class="body-diff-row">'
+      + '<span class="body-diff-label">' + f.label + '</span>'
+      + '<span class="body-diff-val">' + p[f.key] + f.unit + '</span>'
+      + '</div>';
+  });
+  html += '</div>';
+  document.getElementById('body-prev-card').innerHTML = html;
+}
+
+// ===== 保存後の前回比較描画 =====
+function bodyShowDiff(curr, prev) {
+  if (!prev) return;
+  var prevDate = prev.date ? prev.date.replace(/-/g, '/') : '前回';
+  var html = '<div class="body-diff-card">'
+    + '<div class="body-diff-title">📊 前回比較（' + prevDate + '）</div>';
+
+  var hasAny = false;
+  BODY_FIELDS.forEach(function(f) {
+    var c = parseFloat(curr[f.key]);
+    if (isNaN(c)) return;
+    hasAny = true;
+    var p = parseFloat(prev[f.key]);
+    var diffHtml = '';
+    if (!isNaN(p)) {
+      var diff = Math.round((c - p) * 10) / 10;
+      var sign  = diff > 0 ? '+' : '';
+      var cls   = diff > 0 ? 'diff-up' : (diff < 0 ? 'diff-down' : 'diff-same');
+      var label = diff === 0 ? '変化なし' : sign + diff + f.unit;
+      diffHtml  = '<span class="body-diff-change ' + cls + '">' + label + '</span>';
+    }
+    html += '<div class="body-diff-row">'
+      + '<span class="body-diff-label">' + f.label + '</span>'
+      + '<span class="body-diff-val">' + c + f.unit + '</span>'
+      + diffHtml
+      + '</div>';
+  });
+
+  if (!hasAny) return;
+  html += '</div>';
+  document.getElementById('body-diff-display').innerHTML = html;
+  document.getElementById('body-after-save').style.display = 'block';
+}
+
+// ===== 部位セレクト（新規記録用）を部位リストで初期化 =====
+function _bodyPopulateNewPhotoPartSelect() {
+  var sel = document.getElementById('body-new-photo-part-select');
+  sel.innerHTML = '';
+  if (!bodyDataLoaded) {
+    var opt = document.createElement('option');
+    opt.value = ''; opt.textContent = '読み込み中…';
+    sel.appendChild(opt);
+    return;
+  }
+  var activeParts = bodyPartsList.filter(function(p) { return p.isActive; });
+  if (activeParts.length === 0) {
+    var opt2 = document.createElement('option');
+    opt2.value = ''; opt2.textContent = '（部位なし）';
+    sel.appendChild(opt2);
+    return;
+  }
+  activeParts.forEach(function(p) {
+    var opt3 = document.createElement('option');
+    opt3.value = p.partId; opt3.textContent = p.partName;
+    sel.appendChild(opt3);
+  });
+  for (var i = 0; i < activeParts.length; i++) {
+    if (activeParts[i].partName === '全身') { sel.value = activeParts[i].partId; break; }
+  }
+}
+
+// ===== 写真選択・圧縮（新規記録用） =====
+function bodyPhotoSelected(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  bodySelectedPhotoName = 'body_' + document.getElementById('body-date').value + '_' + Date.now() + '.jpg';
+
+  bodyCompressImage(file, function(base64, mime) {
+    bodySelectedPhotoBase64 = base64;
+    bodySelectedPhotoMime   = mime;
+    document.getElementById('body-photo-preview').src = 'data:' + mime + ';base64,' + base64;
+    document.getElementById('body-photo-preview-wrap').style.display = 'block';
+    document.getElementById('body-photo-btn').style.display = 'none';
+    _bodyPopulateNewPhotoPartSelect();
+  });
+}
+
+function bodyRemovePhoto() {
+  bodySelectedPhotoBase64 = null;
+  bodySelectedPhotoMime   = null;
+  bodySelectedPhotoName   = null;
+  document.getElementById('body-photo-input').value = '';
+  document.getElementById('body-photo-preview').src = '';
+  document.getElementById('body-photo-preview-wrap').style.display = 'none';
+  document.getElementById('body-photo-btn').style.display = 'flex';
+}
+
+// 画像を Canvas で圧縮して JPEG base64 に変換
+function bodyCompressImage(file, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var maxW = 1200;
+      var scale = img.width > maxW ? maxW / img.width : 1;
+      var canvas = document.createElement('canvas');
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      callback(dataUrl.split(',')[1], 'image/jpeg');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ===== 保存処理 =====
+function bodySave() {
+  var date = document.getElementById('body-date').value;
+  if (!date) {
+    bodyShowResult('error', '❌ 日付を入力してください');
+    return;
+  }
+
+  var curr = {
+    weight: document.getElementById('body-weight').value,
+    chest:  document.getElementById('body-chest').value,
+    waist:  document.getElementById('body-waist').value,
+    hip:    document.getElementById('body-hip').value,
+    thigh:  document.getElementById('body-thigh').value
+  };
+
+  if (!curr.weight && !curr.chest && !curr.waist && !curr.hip && !curr.thigh) {
+    bodyShowResult('error', '❌ 少なくとも1つ入力してください');
+    return;
+  }
+
+  // 写真がある場合は部位を事前バリデーション（ボタン無効化より前）
+  var photoPartId = null;
+  if (bodySelectedPhotoBase64) {
+    photoPartId = document.getElementById('body-new-photo-part-select').value;
+    if (!photoPartId) {
+      bodyShowResult('error', '❌ 写真の部位を選択してください');
+      return;
+    }
+  }
+
+  var btn = document.getElementById('body-save-btn');
+  btn.textContent = '保存中…';
+  btn.disabled = true;
+
+  var prevForDiff = bodyPrevRecord;
+
+  if (bodySelectedPhotoBase64) {
+    bodyShowResult('info', '📤 写真をアップロード中…');
+    var filename = bodySelectedPhotoName;
+    var capturedDate   = date;
+    var capturedPartId = photoPartId;
+    google.script.run
+      .withSuccessHandler(function(uploadRes) {
+        if (!uploadRes.success) {
+          btn.textContent = '💾 保存する';
+          btn.disabled = false;
+          bodyShowResult('error', '❌ 写真のアップロードに失敗しました: ' + (uploadRes.error || ''));
+          return;
+        }
+        var data = {
+          date:   date,
+          weight: curr.weight,
+          chest:  curr.chest,
+          waist:  curr.waist,
+          hip:    curr.hip,
+          thigh:  curr.thigh,
+          memo:   document.getElementById('body-memo').value
+        };
+        var photoInfo = { fileId: uploadRes.fileId, partId: capturedPartId, date: capturedDate };
+        bodyDoSave(data, curr, prevForDiff, btn, photoInfo);
+      })
+      .withFailureHandler(function(err) {
+        btn.textContent = '💾 保存する';
+        btn.disabled = false;
+        bodyShowResult('error', '❌ 写真のアップロードに失敗しました: ' + (err.message || ''));
+      })
+      .uploadBodyPhoto(bodySelectedPhotoBase64, bodySelectedPhotoMime, filename);
+  } else {
+    var data = {
+      date:   date,
+      weight: curr.weight,
+      chest:  curr.chest,
+      waist:  curr.waist,
+      hip:    curr.hip,
+      thigh:  curr.thigh,
+      memo:   document.getElementById('body-memo').value
+    };
+    bodyDoSave(data, curr, prevForDiff, btn, null);
+  }
+}
+
+function bodyDoSave(data, curr, prevForDiff, btn, photoInfo) {
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      if (res.success) {
+        if (photoInfo && res.id) {
+          // 新システム：部位つき写真レコードを挿入
+          google.script.run
+            .withSuccessHandler(function(photoRes) {
+              var msg = photoRes.success
+                ? '✅ 身体データを保存しました！（写真あり）'
+                : '✅ 身体データを保存しました（写真の保存に失敗: ' + (photoRes.error || '') + '）';
+              bodyShowResult('success', msg);
+              bodyShowDiff(curr, prevForDiff);
+              bodyDataLoaded = false;
+              bodyPhotoSysReady = false;
+              bodyResetForm();
+            })
+            .withFailureHandler(function() {
+              bodyShowResult('success', '✅ 身体データを保存しました（写真リンク失敗）');
+              bodyShowDiff(curr, prevForDiff);
+              bodyDataLoaded = false;
+              bodyPhotoSysReady = false;
+              bodyResetForm();
+            })
+            .insertBodyPhotoRecord({ recordId: res.id, date: photoInfo.date, partId: photoInfo.partId, fileId: photoInfo.fileId });
+        } else {
+          bodyShowResult('success', '✅ 身体データを保存しました！');
+          bodyShowDiff(curr, prevForDiff);
+          bodyDataLoaded = false;
+          bodyPhotoSysReady = false;
+          bodyResetForm();
+        }
+      } else {
+        bodyShowResult('error', '❌ エラー: ' + res.error);
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      bodyShowResult('error', '❌ 保存に失敗しました: ' + err.message);
+    })
+    .saveBodyData(data);
+}
+
+function bodyResetForm() {
+  ['body-weight','body-chest','body-waist','body-hip','body-thigh'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('body-memo').value = '';
+  var t = new Date();
+  document.getElementById('body-date').value =
+    t.getFullYear() + '-' +
+    String(t.getMonth() + 1).padStart(2, '0') + '-' +
+    String(t.getDate()).padStart(2, '0');
+  bodyRemovePhoto();
+}
+
+// ===== 履歴描画 =====
+function bodyRenderHistory() {
+  if (!bodyDataLoaded) {
+    var list = document.getElementById('body-history-list');
+    if (!list.querySelector('[data-loading]')) {
+      list.innerHTML = '<div data-loading style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>';
+    }
+    _bodyLoadAll(function() { bodyRenderHistoryList(bodyAllRecords); });
+    return;
+  }
+  bodyRenderHistoryList(bodyAllRecords);
+}
+
+function bodyRenderHistoryList(records) {
+  var list = document.getElementById('body-history-list');
+  if (!records || records.length === 0) {
+    list.innerHTML = '<div class="placeholder-card" style="margin-top:0">'
+      + '<div class="icon">📏</div>'
+      + '<div class="title">記録がありません</div>'
+      + '<div class="desc">「記録する」タブから<br>身体データを入力しましょう</div>'
+      + '</div>';
+    return;
+  }
+
+  var html = '';
+  records.forEach(function(r, i) {
+    var prev = i < records.length - 1 ? records[i + 1] : null;
+    var dateLabel = r.date ? r.date.replace(/-/g, '/') : '—';
+    var safeId = bodyEscape(r.id || '');
+
+    html += '<div class="body-history-card" data-record-id="' + safeId + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    html += '<div class="body-history-date">' + dateLabel + '</div>';
+    html += '<button class="edit-hist-btn" onclick=\'bodyEditOpen(' + JSON.stringify(r.id) + ')\'>数値を編集</button>';
+    html += '</div>';
+
+    // 写真エリア
+    var photos = bodyPhotoSysReady ? (bodyAllPhotos[r.id] || []) : null;
+    if (photos === null) {
+      html += '<div style="font-size:12px;color:var(--text-sub);padding:4px 0">📸 写真を読み込み中…</div>';
+    } else {
+      photos.forEach(function(photo) {
+        var partLabel = _bodyGetPartName(photo.partId, photo.isLegacy);
+        var thumbUrl = 'https://drive.google.com/thumbnail?id=' + bodyEscape(photo.fileId) + '&sz=w300';
+        html += '<div class="body-photo-item">';
+        html += '<div class="body-photo-part-label">' + bodyEscape(partLabel) + '</div>';
+        html += '<div onclick=\'bodyLightboxOpen(' + JSON.stringify(photo.fileId) + ')\' style="display:block;margin-bottom:8px;cursor:pointer">'
+          + '<img src="' + thumbUrl + '" loading="lazy"'
+          + ' style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
+          + '</div>';
+        html += '<div class="body-photo-actions">'
+          + '<button class="body-photo-action-btn body-photo-action-change"'
+          + ' onclick=\'bodyChangePhotoOpen(' + JSON.stringify(photo.photoId) + ',' + JSON.stringify(r.id) + ',' + JSON.stringify(!!photo.isLegacy) + ')\'>'
+          + '📷 変更</button>'
+          + '<button class="body-photo-action-btn body-photo-action-delete"'
+          + ' onclick=\'bodyDelPhotoOpen(' + JSON.stringify(photo.photoId) + ',' + JSON.stringify(r.id) + ',' + JSON.stringify(!!photo.isLegacy) + ')\'>'
+          + '🗑 削除</button>'
+          + '</div>';
+        html += '</div>';
+      });
+      html += '<div class="body-photo-actions" style="margin-top:' + (photos.length > 0 ? '4' : '0') + 'px">';
+      html += '<button class="body-photo-action-btn body-photo-action-add" style="width:100%"'
+        + ' onclick=\'bodyAddPhotoOpen(' + JSON.stringify(r.id) + ',' + JSON.stringify(r.date || '') + ')\'>'
+        + '📸 写真を追加</button>';
+      html += '</div>';
+    }
+
+    html += '<div class="body-history-grid">';
+    BODY_FIELDS.forEach(function(f) {
+      var val = r[f.key];
+      var dispVal = (val !== '' && val !== null && val !== undefined)
+        ? val + f.unit : '—';
+
+      var diffHtml = '';
+      if (prev) {
+        var c = parseFloat(val);
+        var p = parseFloat(prev[f.key]);
+        if (!isNaN(c) && !isNaN(p)) {
+          var diff = Math.round((c - p) * 10) / 10;
+          if (diff !== 0) {
+            var sign = diff > 0 ? '+' : '';
+            var cls  = diff > 0 ? 'diff-up' : 'diff-down';
+            diffHtml = '<div class="body-history-diff ' + cls + '">'
+              + sign + diff + f.unit + '</div>';
+          }
+        }
+      }
+
+      html += '<div class="body-history-item">'
+        + '<div class="body-history-label">' + f.label + '</div>'
+        + '<div class="body-history-val">' + bodyEscape(dispVal) + '</div>'
+        + diffHtml
+        + '</div>';
+    });
+
+    html += '</div>';
+    if (r.memo) {
+      html += '<div style="font-size:12px;color:var(--text-sub);margin-top:8px;word-break:break-all">'
+        + bodyEscape(r.memo) + '</div>';
+    }
+    html += '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+// ===== 部位名取得 =====
+function _bodyGetPartName(partId, isLegacy) {
+  if (isLegacy || partId === 'LEGACY') return '未分類';
+  for (var i = 0; i < bodyPartsList.length; i++) {
+    if (bodyPartsList[i].partId === partId) return bodyPartsList[i].partName;
+  }
+  return '未分類';
+}
+
+// ===== 写真変更（履歴カード） =====
+function bodyChangePhotoOpen(photoId, recordId, isLegacy) {
+  _bodyChgPhotoId       = photoId;
+  _bodyChgPhotoRecordId = recordId;
+  _bodyChgPhotoIsLegacy = !!isLegacy;
+  document.getElementById('body-history-photo-input').value = '';
+  document.getElementById('body-history-photo-input').click();
+}
+
+function bodyHistoryPhotoSelected(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var photoId   = _bodyChgPhotoId;
+  var recordId  = _bodyChgPhotoRecordId;
+  var isLegacy  = _bodyChgPhotoIsLegacy;
+  if (!recordId) return;
+
+  var card = document.querySelector('[data-record-id="' + recordId + '"]');
+  if (card) {
+    var actDiv = card.querySelector('.body-photo-actions');
+    if (actDiv) actDiv.innerHTML = '<div style="font-size:13px;color:#1565C0;padding:8px 0">⏳ 只今変更中…</div>';
+  }
+
+  var filename = 'body_change_' + Date.now() + '.jpg';
+  bodyCompressImage(file, function(base64, mime) {
+    if (isLegacy) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          input.value = '';
+          if (res && res.success) {
+            for (var i = 0; i < bodyAllRecords.length; i++) {
+              if (bodyAllRecords[i].id === recordId) { bodyAllRecords[i].photoFileId = res.newFileId; break; }
+            }
+            if (bodyAllPhotos[recordId]) {
+              bodyAllPhotos[recordId].forEach(function(p) { if (p.isLegacy) p.fileId = res.newFileId; });
+            }
+            if (typeof showToast === 'function') showToast('✓ 変更しました', 'success');
+          } else {
+            if (typeof showToast === 'function') showToast('⚠ 変更に失敗しました', 'error');
+          }
+          bodyRenderHistoryList(bodyAllRecords);
+        })
+        .withFailureHandler(function() {
+          input.value = '';
+          if (typeof showToast === 'function') showToast('⚠ 変更に失敗しました', 'error');
+          bodyRenderHistoryList(bodyAllRecords);
+        })
+        .updateBodyPhoto(recordId, base64, mime, filename);
+    } else {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          input.value = '';
+          if (res && res.success && bodyAllPhotos[recordId]) {
+            bodyAllPhotos[recordId].forEach(function(p) { if (p.photoId === photoId) p.fileId = res.fileId; });
+            if (typeof showToast === 'function') showToast('✓ 変更しました', 'success');
+          } else {
+            if (typeof showToast === 'function') showToast('⚠ 変更に失敗しました', 'error');
+          }
+          bodyRenderHistoryList(bodyAllRecords);
+        })
+        .withFailureHandler(function() {
+          input.value = '';
+          if (typeof showToast === 'function') showToast('⚠ 変更に失敗しました', 'error');
+          bodyRenderHistoryList(bodyAllRecords);
+        })
+        .changeBodyPhotoRecord({ photoId: photoId, base64: base64, mime: mime, filename: filename });
+    }
+  });
+}
+
+// ===== 写真追加モーダル =====
+function bodyAddPhotoOpen(recordId, date) {
+  _bodyAddRecordId = recordId;
+  _bodyAddDate     = date;
+  _bodyAddBase64   = null;
+  _bodyAddMime     = null;
+  _bodyAddFilename = '';
+
+  document.getElementById('body-add-photo-preview-wrap').style.display = 'none';
+  document.getElementById('body-add-photo-preview').src = '';
+  document.getElementById('body-add-photo-file-input').value = '';
+  var res = document.getElementById('body-add-photo-result');
+  res.className = 'edit-result'; res.textContent = '';
+
+  var sel = document.getElementById('body-add-photo-part-select');
+  sel.innerHTML = '';
+  var activeParts = bodyPartsList.filter(function(p) { return p.isActive; });
+  activeParts.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value = p.partId;
+    opt.textContent = p.partName;
+    sel.appendChild(opt);
+  });
+  // デフォルト：全身
+  for (var i = 0; i < activeParts.length; i++) {
+    if (activeParts[i].partName === '全身') { sel.value = activeParts[i].partId; break; }
+  }
+
+  var btn = document.getElementById('body-add-photo-save-btn');
+  btn.textContent = '保存する'; btn.disabled = false;
+
+  document.getElementById('body-add-photo-modal').style.display = 'flex';
+}
+
+function bodyAddPhotoClose() {
+  document.getElementById('body-add-photo-modal').style.display = 'none';
+  _bodyAddRecordId = '';
+  _bodyAddBase64   = null;
+}
+
+function bodyAddPhotoModalBgClick(e) {
+  if (e.target === document.getElementById('body-add-photo-modal')) bodyAddPhotoClose();
+}
+
+function bodyAddPhotoFileSelected(input) {
+  if (!input.files || !input.files[0]) return;
+  _bodyAddFilename = 'body_' + (_bodyAddDate || Date.now()) + '_' + Date.now() + '.jpg';
+  bodyCompressImage(input.files[0], function(base64, mime) {
+    _bodyAddBase64 = base64;
+    _bodyAddMime   = mime;
+    document.getElementById('body-add-photo-preview').src = 'data:' + mime + ';base64,' + base64;
+    document.getElementById('body-add-photo-preview-wrap').style.display = 'block';
+  });
+}
+
+function bodyAddPhotoSave() {
+  if (!_bodyAddBase64) { _bodyAddPhotoShowResult('error', '写真を選択してください'); return; }
+  var partId = document.getElementById('body-add-photo-part-select').value;
+  if (!partId) { _bodyAddPhotoShowResult('error', '部位を選択してください'); return; }
+  var btn = document.getElementById('body-add-photo-save-btn');
+  btn.textContent = '写真を登録中…'; btn.disabled = true;
+
+  var capturedRecordId = _bodyAddRecordId;
+  var capturedDate     = _bodyAddDate;
+  var capturedPartId   = partId;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = '保存する'; btn.disabled = false;
+      if (res && res.success) {
+        if (!bodyAllPhotos[capturedRecordId]) bodyAllPhotos[capturedRecordId] = [];
+        bodyAllPhotos[capturedRecordId].push({ photoId: res.photoId, date: capturedDate, partId: capturedPartId, fileId: res.fileId, isLegacy: false });
+        bodyAddPhotoClose();
+        bodyRenderHistoryList(bodyAllRecords);
+        if (typeof showToast === 'function') showToast('✓ 写真を追加しました', 'success');
+      } else {
+        _bodyAddPhotoShowResult('error', '保存に失敗しました: ' + ((res && res.error) || ''));
+        if (typeof showToast === 'function') showToast('⚠ 追加に失敗しました', 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.textContent = '保存する'; btn.disabled = false;
+      _bodyAddPhotoShowResult('error', '保存に失敗しました: ' + (err.message || ''));
+      if (typeof showToast === 'function') showToast('⚠ 追加に失敗しました', 'error');
+    })
+    .addBodyPhotoRecord({ recordId: capturedRecordId, date: capturedDate, partId: capturedPartId, base64: _bodyAddBase64, mime: _bodyAddMime, filename: _bodyAddFilename });
+}
+
+function _bodyAddPhotoShowResult(type, msg) {
+  var el = document.getElementById('body-add-photo-result');
+  el.className = 'edit-result ' + type;
+  el.textContent = msg;
+}
+
+// ===== 写真削除確認モーダル =====
+function bodyDelPhotoOpen(photoId, recordId, isLegacy) {
+  _bodyDelPhotoId  = photoId;
+  _bodyDelRecordId = recordId;
+  _bodyDelIsLegacy = !!isLegacy;
+  // ダイアログの状態を初期化
+  var confirmBtn = document.getElementById('body-del-confirm-btn');
+  var cancelBtn  = document.getElementById('body-del-cancel-btn');
+  var errEl      = document.getElementById('body-del-error-msg');
+  if (confirmBtn) { confirmBtn.textContent = '削除する'; confirmBtn.disabled = false; }
+  if (cancelBtn)  { cancelBtn.disabled = false; }
+  if (errEl)      { errEl.textContent = ''; }
+  document.getElementById('body-del-photo-modal').style.display = 'flex';
+}
+
+function bodyDelPhotoClose() {
+  document.getElementById('body-del-photo-modal').style.display = 'none';
+}
+
+function bodyDelPhotoModalBgClick(e) {
+  if (e.target === document.getElementById('body-del-photo-modal')) bodyDelPhotoClose();
+}
+
+function bodyDelPhotoConfirm() {
+  var confirmBtn = document.getElementById('body-del-confirm-btn');
+  var cancelBtn  = document.getElementById('body-del-cancel-btn');
+  var errEl      = document.getElementById('body-del-error-msg');
+  if (confirmBtn && confirmBtn.disabled) return;
+  if (confirmBtn) { confirmBtn.textContent = '削除中…'; confirmBtn.disabled = true; }
+  if (cancelBtn)  { cancelBtn.disabled = true; }
+  if (errEl)      { errEl.textContent = ''; }
+
+  var photoId  = _bodyDelPhotoId;
+  var recordId = _bodyDelRecordId;
+  var isLegacy = _bodyDelIsLegacy;
+
+  function _onDelSuccess() {
+    if (bodyAllPhotos[recordId]) {
+      bodyAllPhotos[recordId] = bodyAllPhotos[recordId].filter(function(p) { return p.photoId !== photoId; });
+    }
+    if (isLegacy) {
+      for (var i = 0; i < bodyAllRecords.length; i++) {
+        if (bodyAllRecords[i].id === recordId) { bodyAllRecords[i].photoFileId = ''; break; }
+      }
+    }
+    bodyDelPhotoClose();
+    bodyRenderHistoryList(bodyAllRecords);
+    if (typeof showToast === 'function') showToast('✓ 削除しました', 'success');
+  }
+
+  function _onDelFailure(msg) {
+    if (confirmBtn) { confirmBtn.textContent = '削除する'; confirmBtn.disabled = false; }
+    if (cancelBtn)  { cancelBtn.disabled = false; }
+    if (errEl)      { errEl.textContent = msg || '削除に失敗しました。もう一度お試しください。'; }
+  }
+
+  if (isLegacy) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) _onDelSuccess();
+        else _onDelFailure(res && res.error);
+      })
+      .withFailureHandler(function(err) { _onDelFailure(err && err.message); })
+      .deleteBodyPhoto(recordId);
+  } else {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) _onDelSuccess();
+        else _onDelFailure(res && res.error);
+      })
+      .withFailureHandler(function(err) { _onDelFailure(err && err.message); })
+      .deleteBodyPhotoRecord(photoId);
+  }
+}
+
+// ===== 比較タブ =====
+function bodyRenderCompareTab() {
+  var content = document.getElementById('body-compare-content');
+  if (!bodyDataLoaded) {
+    content.innerHTML = '<div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>';
+    _bodyLoadAll(function() { bodyDoRenderCompare(); });
+    return;
+  }
+  bodyDoRenderCompare();
+}
+
+function bodyDoRenderCompare() {
+  var content = document.getElementById('body-compare-content');
+
+  var withPhotos = bodyAllRecords.filter(function(r) {
+    var photos = bodyAllPhotos[r.id] || [];
+    if (!bodyComparePartId) return photos.length > 0;
+    return photos.some(function(p) {
+      return bodyComparePartId === 'LEGACY' ? p.isLegacy : p.partId === bodyComparePartId;
+    });
+  });
+
+  if (withPhotos.length === 0) {
+    content.innerHTML = '<div class="placeholder-card" style="margin-top:0">'
+      + '<div class="icon">📸</div>'
+      + '<div class="title">写真がありません</div>'
+      + '<div class="desc">「記録する」タブや「履歴」タブから<br>写真を追加すると比較できます</div>'
+      + '</div>';
+    return;
+  }
+
+  var newest = withPhotos[0];
+  var targetDate = new Date(newest.date);
+  targetDate.setDate(targetDate.getDate() - 30);
+  var past = null;
+  if (withPhotos.length > 1) {
+    var minDiff = Infinity;
+    for (var i = 1; i < withPhotos.length; i++) {
+      var d = new Date(withPhotos[i].date);
+      var diff = Math.abs(d.getTime() - targetDate.getTime());
+      if (diff < minDiff) { minDiff = diff; past = withPhotos[i]; }
+    }
+  }
+
+  bodyRenderCompareView(newest, past, withPhotos);
+}
+
+function bodyRenderCompareView(newest, past, withPhotos) {
+  var content = document.getElementById('body-compare-content');
+  var html = '';
+
+  // 部位セレクター
+  var partIdsInUse = {};
+  bodyAllRecords.forEach(function(r) {
+    (bodyAllPhotos[r.id] || []).forEach(function(p) {
+      partIdsInUse[p.isLegacy ? 'LEGACY' : p.partId] = true;
+    });
+  });
+  var partKeys = Object.keys(partIdsInUse);
+  if (partKeys.length > 1 || bodyComparePartId) {
+    html += '<div class="body-compare-select-wrap">';
+    html += '<div class="body-compare-select-label">🏷 表示する部位</div>';
+    html += '<select class="body-compare-select" id="body-compare-part-select" onchange="bodyComparePartChanged(this)">';
+    html += '<option value=""' + (!bodyComparePartId ? ' selected' : '') + '>すべて（最初の写真）</option>';
+    partKeys.forEach(function(pid) {
+      html += '<option value="' + bodyEscape(pid) + '"' + (bodyComparePartId === pid ? ' selected' : '') + '>'
+        + bodyEscape(_bodyGetPartName(pid, pid === 'LEGACY')) + '</option>';
+    });
+    html += '</select></div>';
+  }
+
+  // 日付セレクター
+  if (withPhotos.length > 1) {
+    html += '<div class="body-compare-select-wrap">';
+    html += '<div class="body-compare-select-label">📅 比較する過去の写真を選択</div>';
+    html += '<select class="body-compare-select" id="body-compare-past-select" onchange="bodyComparePastChanged(this)">';
+    for (var i = 1; i < withPhotos.length; i++) {
+      var r = withPhotos[i];
+      var label = r.date ? r.date.replace(/-/g, '/') : '—';
+      var selected = (past && past.id === r.id) ? ' selected' : '';
+      var daysDiff = Math.round((new Date(newest.date) - new Date(r.date)) / 86400000);
+      html += '<option value="' + bodyEscape(r.id) + '"' + selected + '>'
+        + label + '（' + daysDiff + '日前）</option>';
+    }
+    html += '</select></div>';
+  }
+
+  // 比較表示
+  html += '<div class="body-compare-row">';
+  html += '<div class="body-compare-col">';
+  html += '<div class="body-compare-heading">現在</div>';
+  html += '<div class="body-compare-date">' + (newest.date ? newest.date.replace(/-/g, '/') : '—') + '</div>';
+  html += bodyComparePhotoHtml(newest);
+  html += bodyCompareStatsHtml(newest);
+  html += '</div>';
+
+  html += '<div class="body-compare-col">';
+  html += '<div class="body-compare-heading">過去</div>';
+  if (past) {
+    var daysDiff2 = Math.round((new Date(newest.date) - new Date(past.date)) / 86400000);
+    html += '<div class="body-compare-date">' + (past.date ? past.date.replace(/-/g, '/') : '—') + '（' + daysDiff2 + '日前）</div>';
+    html += bodyComparePhotoHtml(past);
+    html += bodyCompareStatsHtml(past);
+  } else {
+    html += '<div class="body-compare-date">—</div>';
+    html += '<div class="body-compare-no-photo"><span style="font-size:32px">📷</span><span>写真なし</span></div>';
+  }
+  html += '</div>';
+  html += '</div>';
+
+  if (past) html += bodyCompareDiffSummary(newest, past);
+
+  content.innerHTML = html;
+}
+
+function _bodyGetComparePhoto(record) {
+  var photos = bodyAllPhotos[record.id] || [];
+  if (!bodyComparePartId) return photos[0] || null;
+  for (var i = 0; i < photos.length; i++) {
+    var p = photos[i];
+    if (bodyComparePartId === 'LEGACY' ? p.isLegacy : p.partId === bodyComparePartId) return p;
+  }
+  return null;
+}
+
+function bodyComparePhotoHtml(r) {
+  var photo = _bodyGetComparePhoto(r);
+  if (!photo) {
+    return '<div class="body-compare-no-photo"><span style="font-size:32px">📷</span><span>写真なし</span></div>';
+  }
+  var thumbUrl = 'https://drive.google.com/thumbnail?id=' + bodyEscape(photo.fileId) + '&sz=w400';
+  return '<div onclick=\'bodyLightboxOpen(' + JSON.stringify(photo.fileId) + ')\' style="display:block;cursor:pointer">'
+    + '<img class="body-compare-img" src="' + thumbUrl + '" loading="lazy">'
+    + '</div>';
+}
+
+function bodyCompareStatsHtml(r) {
+  var lines = [];
+  BODY_FIELDS.forEach(function(f) {
+    if (r[f.key] !== '' && r[f.key] !== null && r[f.key] !== undefined) {
+      lines.push(f.label + ': <b>' + bodyEscape(String(r[f.key])) + f.unit + '</b>');
+    }
+  });
+  if (lines.length === 0) return '';
+  return '<div class="body-compare-stats">' + lines.join('<br>') + '</div>';
+}
+
+function bodyCompareDiffSummary(curr, prev) {
+  var rows = [];
+  BODY_FIELDS.forEach(function(f) {
+    var c = parseFloat(curr[f.key]);
+    var p = parseFloat(prev[f.key]);
+    if (isNaN(c) || isNaN(p)) return;
+    var diff = Math.round((c - p) * 10) / 10;
+    var sign = diff > 0 ? '+' : '';
+    var cls  = diff > 0 ? 'diff-up' : (diff < 0 ? 'diff-down' : 'diff-same');
+    var label = diff === 0 ? '変化なし' : sign + diff + f.unit;
+    rows.push('<div class="body-diff-row">'
+      + '<span class="body-diff-label">' + f.label + '</span>'
+      + '<span class="body-diff-val">' + curr[f.key] + f.unit + '</span>'
+      + '<span class="body-diff-change ' + cls + '">' + label + '</span>'
+      + '</div>');
+  });
+  if (rows.length === 0) return '';
+  return '<div class="body-diff-card">'
+    + '<div class="body-diff-title">📊 変化サマリー</div>'
+    + rows.join('')
+    + '</div>';
+}
+
+function bodyComparePastChanged(sel) {
+  var selectedId = sel.value;
+  var withPhotos = bodyAllRecords.filter(function(r) {
+    var photos = bodyAllPhotos[r.id] || [];
+    if (!bodyComparePartId) return photos.length > 0;
+    return photos.some(function(p) {
+      return bodyComparePartId === 'LEGACY' ? p.isLegacy : p.partId === bodyComparePartId;
+    });
+  });
+  var newest = withPhotos[0];
+  var past = null;
+  for (var i = 0; i < withPhotos.length; i++) {
+    if (withPhotos[i].id === selectedId) { past = withPhotos[i]; break; }
+  }
+  bodyRenderCompareView(newest, past, withPhotos);
+}
+
+function bodyComparePartChanged(sel) {
+  bodyComparePartId = sel.value;
+  bodyDoRenderCompare();
+}
+
+// ===== 部位マスタ管理モーダル =====
+function bodyPartMasterOpen() {
+  var res = document.getElementById('body-part-master-result');
+  res.className = 'edit-result'; res.textContent = '';
+  document.getElementById('body-part-master-new-name').value = '';
+  var addBtn = document.getElementById('body-part-master-add-btn');
+  addBtn.textContent = '追加'; addBtn.disabled = false;
+  _bodyPartMasterRender();
+  document.getElementById('body-part-master-modal').style.display = 'flex';
+}
+
+function bodyPartMasterClose() {
+  document.getElementById('body-part-master-modal').style.display = 'none';
+  // 写真プレビューが表示中なら部位セレクトを最新の状態に更新
+  var wrap = document.getElementById('body-photo-preview-wrap');
+  if (wrap && wrap.style.display !== 'none') _bodyPopulateNewPhotoPartSelect();
+}
+
+function bodyPartMasterModalBgClick(e) {
+  if (e.target === document.getElementById('body-part-master-modal')) bodyPartMasterClose();
+}
+
+function _bodyPartMasterRender() {
+  var container = document.getElementById('body-part-master-list');
+  var activeParts = bodyPartsList.filter(function(p) { return p.isActive; });
+  if (activeParts.length === 0) {
+    container.innerHTML = '<div style="font-size:14px;color:var(--text-sub);padding:8px 0">部位がありません</div>';
+    return;
+  }
+  var html = '';
+  activeParts.forEach(function(p) {
+    html += '<div class="body-part-master-row" id="body-part-row-' + bodyEscape(p.partId) + '">';
+    html += '<div class="body-part-master-name">' + bodyEscape(p.partName) + '</div>';
+    if (p.isStandard) {
+      html += '<span class="body-part-master-std">標準</span>';
+    } else {
+      html += '<button class="body-part-master-btn body-part-master-rename" onclick=\'bodyPartMasterStartRename(' + JSON.stringify(p.partId) + ',' + JSON.stringify(p.partName) + ')\'>名前変更</button>';
+      html += '<button class="body-part-master-btn body-part-master-del" onclick=\'bodyPartMasterDelete(' + JSON.stringify(p.partId) + ',' + JSON.stringify(p.partName) + ')\'>削除</button>';
+    }
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function bodyPartMasterStartRename(partId, currentName) {
+  var row = document.getElementById('body-part-row-' + partId);
+  if (!row) return;
+  row.innerHTML = '<input class="form-input" style="flex:1;font-size:14px" value="' + bodyEscape(currentName) + '" id="body-part-rename-input-' + bodyEscape(partId) + '">'
+    + '<button class="body-part-master-btn" style="background:#1A4E9A;color:#fff" onclick=\'bodyPartMasterSaveRename(' + JSON.stringify(partId) + ')\'>保存</button>'
+    + '<button class="body-part-master-btn" style="background:#eee;color:#333" onclick="_bodyPartMasterRender()">ｷｬﾝｾﾙ</button>';
+}
+
+function bodyPartMasterSaveRename(partId) {
+  var input = document.getElementById('body-part-rename-input-' + partId);
+  if (!input) return;
+  var newName = input.value.trim();
+  if (!newName) { _bodyPartMasterShowResult('error', '名前を入力してください'); return; }
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.success) {
+        for (var i = 0; i < bodyPartsList.length; i++) {
+          if (bodyPartsList[i].partId === partId) { bodyPartsList[i].partName = newName; break; }
+        }
+        _bodyPartMasterRender();
+      } else {
+        _bodyPartMasterShowResult('error', (res && res.error) || '変更に失敗しました');
+      }
+    })
+    .withFailureHandler(function(err) { _bodyPartMasterShowResult('error', err.message || '変更に失敗しました'); })
+    .updateBodyPartName(partId, newName);
+}
+
+function bodyPartMasterDelete(partId, partName) {
+  // custom confirm panel instead of confirm()
+  var res = document.getElementById('body-part-master-result');
+  res.className = 'edit-result error';
+  res.innerHTML = '「' + bodyEscape(partName) + '」を削除しますか？'
+    + '<br><button style="margin-top:8px;margin-right:8px;padding:6px 16px;background:#B71C1C;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600" onclick=\'bodyPartMasterDeleteConfirm(' + JSON.stringify(partId) + ')\'>削除する</button>'
+    + '<button style="padding:6px 16px;background:#eee;color:#333;border:none;border-radius:8px;cursor:pointer" onclick="document.getElementById(\'body-part-master-result\').className=\'edit-result\';document.getElementById(\'body-part-master-result\').innerHTML=\'\'">キャンセル</button>';
+}
+
+function bodyPartMasterDeleteConfirm(partId) {
+  google.script.run
+    .withSuccessHandler(function(res) {
+      var el = document.getElementById('body-part-master-result');
+      el.className = 'edit-result'; el.innerHTML = '';
+      if (res && res.success) {
+        bodyPartsList = bodyPartsList.filter(function(p) { return p.partId !== partId; });
+        _bodyPartMasterRender();
+      } else {
+        el.className = 'edit-result error';
+        el.textContent = (res && res.error) || '削除に失敗しました';
+      }
+    })
+    .withFailureHandler(function(err) {
+      _bodyPartMasterShowResult('error', err.message || '削除に失敗しました');
+    })
+    .deleteBodyPart(partId);
+}
+
+function bodyPartMasterAdd() {
+  var nameInput = document.getElementById('body-part-master-new-name');
+  var name = nameInput.value.trim();
+  if (!name) { _bodyPartMasterShowResult('error', '部位名を入力してください'); return; }
+  var addBtn = document.getElementById('body-part-master-add-btn');
+  addBtn.textContent = '追加中…'; addBtn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      addBtn.textContent = '追加'; addBtn.disabled = false;
+      if (res && res.success) {
+        bodyPartsList.push({ partId: res.partId, partName: res.partName, isStandard: false, isActive: true });
+        nameInput.value = '';
+        var el = document.getElementById('body-part-master-result');
+        el.className = 'edit-result success'; el.textContent = '「' + res.partName + '」を追加しました';
+        _bodyPartMasterRender();
+        // 新規記録フォームで写真が選択済みなら部位セレクトに即反映
+        var wrap = document.getElementById('body-photo-preview-wrap');
+        if (wrap && wrap.style.display !== 'none') _bodyPopulateNewPhotoPartSelect();
+      } else {
+        _bodyPartMasterShowResult('error', (res && res.error) || '追加に失敗しました');
+      }
+    })
+    .withFailureHandler(function(err) {
+      addBtn.textContent = '追加'; addBtn.disabled = false;
+      _bodyPartMasterShowResult('error', err.message || '追加に失敗しました');
+    })
+    .addBodyPart(name);
+}
+
+function _bodyPartMasterShowResult(type, msg) {
+  var el = document.getElementById('body-part-master-result');
+  el.className = 'edit-result ' + type;
+  el.textContent = msg;
+}
+
+// ===== 身体タブ再表示時のビューリセット =====
+// 全モーダルを閉じ、記録するタブに戻す。showPage('history') から呼ばれる。
+function bodyResetView() {
+  ['body-part-master-modal', 'body-edit-modal', 'body-add-photo-modal', 'body-del-photo-modal', 'body-photo-lightbox'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  var lbImg = document.getElementById('body-photo-lightbox-img');
+  if (lbImg) lbImg.src = '';
+  document.querySelectorAll('.body-pane').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.body-tab').forEach(function(b) { b.classList.remove('active'); });
+  var pane = document.getElementById('body-pane-record');
+  var tab  = document.getElementById('body-tab-record');
+  if (pane) pane.classList.add('active');
+  if (tab)  tab.classList.add('active');
+}
+
+// ===== 写真ライトボックス =====
+function bodyLightboxOpen(fileId) {
+  var url = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1200';
+  document.getElementById('body-photo-lightbox-img').src = url;
+  document.getElementById('body-photo-lightbox').style.display = 'flex';
+}
+
+function bodyLightboxClose() {
+  document.getElementById('body-photo-lightbox').style.display = 'none';
+  document.getElementById('body-photo-lightbox-img').src = '';
+}
+
+// ===== ユーティリティ =====
+function bodyEscape(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function bodyShowResult(type, message) {
+  var el = document.getElementById('body-result');
+  el.className = 'save-result ' + type;
+  el.textContent = message;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ===== 身体データ履歴 編集（数値のみ） =====
+var _bodyEditId = '';
+
+function bodyEditOpen(recordId) {
+  var r = null;
+  for (var i = 0; i < bodyAllRecords.length; i++) {
+    if (bodyAllRecords[i].id === recordId) { r = bodyAllRecords[i]; break; }
+  }
+  if (!r) return;
+  _bodyEditId = recordId;
+
+  document.getElementById('boe-date').value  = r.date   || '';
+  document.getElementById('boe-weight').value = r.weight || '';
+  document.getElementById('boe-chest').value  = r.chest  || '';
+  document.getElementById('boe-waist').value  = r.waist  || '';
+  document.getElementById('boe-hip').value    = r.hip    || '';
+  document.getElementById('boe-thigh').value  = r.thigh  || '';
+  document.getElementById('boe-memo').value   = r.memo   || '';
+
+  var res = document.getElementById('boe-result');
+  res.className = 'edit-result'; res.textContent = '';
+  document.getElementById('body-edit-modal').style.display = 'flex';
+}
+
+function bodyEditClose() {
+  document.getElementById('body-edit-modal').style.display = 'none';
+  _bodyEditId = '';
+}
+
+function bodyEditBgClick(e) {
+  if (e.target === document.getElementById('body-edit-modal')) bodyEditClose();
+}
+
+function bodyEditSave() {
+  if (!_bodyEditId) { _boeShowResult('error', 'IDが見つかりません'); return; }
+  var date = document.getElementById('boe-date').value;
+  if (!date) { _boeShowResult('error', '日付を入力してください'); return; }
+  var data = {
+    id:     _bodyEditId,
+    date:   date,
+    weight: document.getElementById('boe-weight').value,
+    chest:  document.getElementById('boe-chest').value,
+    waist:  document.getElementById('boe-waist').value,
+    hip:    document.getElementById('boe-hip').value,
+    thigh:  document.getElementById('boe-thigh').value,
+    memo:   document.getElementById('boe-memo').value
+  };
+  var btn    = document.getElementById('boe-save-btn');
+  var btnTop = document.getElementById('boe-save-btn-top');
+  function _boeSetLoading(on) {
+    var label = on ? '只今変更中…' : '変更を保存';
+    btn.textContent = label; btn.disabled = on;
+    if (btnTop) { btnTop.textContent = label; btnTop.disabled = on; }
+  }
+  _boeSetLoading(true);
+  _boeShowResult('', '');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      _boeSetLoading(false);
+      if (res && res.success) {
+        for (var i = 0; i < bodyAllRecords.length; i++) {
+          if (bodyAllRecords[i].id === _bodyEditId) {
+            bodyAllRecords[i].date   = data.date;
+            bodyAllRecords[i].weight = data.weight;
+            bodyAllRecords[i].chest  = data.chest;
+            bodyAllRecords[i].waist  = data.waist;
+            bodyAllRecords[i].hip    = data.hip;
+            bodyAllRecords[i].thigh  = data.thigh;
+            bodyAllRecords[i].memo   = data.memo;
+            break;
+          }
+        }
+        bodyAllRecords.sort(function(a,b){ return b.date.localeCompare(a.date); });
+        if (typeof _aiBodyRecords !== 'undefined') _aiBodyRecords = null;
+        bodyEditClose();
+        bodyRenderHistoryList(bodyAllRecords);
+        if (typeof homeRefresh === 'function') homeRefresh();
+        if (typeof showToast === 'function') showToast('✓ 変更しました', 'success');
+      } else {
+        console.error('updateBodyRecord error:', res ? res.error : '不明');
+        _boeShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+      }
+    })
+    .withFailureHandler(function(err) {
+      _boeSetLoading(false);
+      console.error('updateBodyRecord failure:', err);
+      _boeShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+    })
+    .updateBodyRecord(data);
+}
+
+function _boeShowResult(type, msg) {
+  var el = document.getElementById('boe-result');
+  el.className = 'edit-result ' + type;
+  el.textContent = msg;
+}
+</script>
+
+<!-- 身体データ 編集モーダル（数値のみ、写真変更は別途） -->
+<div id="body-edit-modal" class="edit-modal" style="display:none" onclick="bodyEditBgClick(event)">
+  <div class="edit-modal-sheet">
+    <div class="edit-modal-header">
+      <span class="edit-modal-title">身体データを編集</span>
+      <button class="edit-modal-close" onclick="bodyEditClose()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <div class="edit-result" id="boe-result"></div>
+      <button id="boe-save-btn-top" class="btn-edit-save-top" onclick="bodyEditSave()">変更を保存</button>
+      <div class="form-section">
+        <div class="form-section-title">📅 日付</div>
+        <input type="date" id="boe-date" class="form-input" style="width:100%;font-size:16px">
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">📏 身体データ</div>
+        <div class="form-row"><label class="form-label">体重</label>
+          <input type="number" id="boe-weight" class="form-input" placeholder="70.0" step="0.1" min="0">
+          <span class="form-unit">kg</span></div>
+        <div class="form-row"><label class="form-label">胸囲</label>
+          <input type="number" id="boe-chest" class="form-input" placeholder="95.0" step="0.1" min="0">
+          <span class="form-unit">cm</span></div>
+        <div class="form-row"><label class="form-label">ウエスト</label>
+          <input type="number" id="boe-waist" class="form-input" placeholder="80.0" step="0.1" min="0">
+          <span class="form-unit">cm</span></div>
+        <div class="form-row"><label class="form-label">ヒップ</label>
+          <input type="number" id="boe-hip" class="form-input" placeholder="90.0" step="0.1" min="0">
+          <span class="form-unit">cm</span></div>
+        <div class="form-row" style="margin-bottom:0"><label class="form-label">太もも</label>
+          <input type="number" id="boe-thigh" class="form-input" placeholder="55.0" step="0.1" min="0">
+          <span class="form-unit">cm</span></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">📝 メモ</div>
+        <textarea id="boe-memo" class="form-textarea" placeholder="気づき・特記事項など"></textarea>
+      </div>
+      <p style="font-size:11px;color:var(--text-sub);margin:0">※写真の変更・削除は履歴カードのボタンから行えます</p>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-edit-cancel" onclick="bodyEditClose()">キャンセル</button>
+      <button class="btn-edit-save" id="boe-save-btn" onclick="bodyEditSave()">変更を保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 写真追加モーダル -->
+<!-- bottom:var(--nav-h) でナビバーを避け、フッターを flex-shrink:0 で常時表示 -->
+<div id="body-add-photo-modal"
+     style="display:none; position:fixed; top:0; left:0; right:0; bottom:var(--nav-h); background:rgba(0,0,0,0.5); z-index:2000; align-items:flex-end;"
+     onclick="bodyAddPhotoModalBgClick(event)">
+  <div style="width:100%; background:#fff; border-radius:16px 16px 0 0; display:flex; flex-direction:column; max-height:calc(100dvh - var(--nav-h) - 16px); overflow:hidden;">
+    <!-- ヘッダー -->
+    <div class="edit-modal-header">
+      <span class="edit-modal-title">📸 写真を追加</span>
+      <button class="edit-modal-close" onclick="bodyAddPhotoClose()">✕</button>
+    </div>
+    <!-- スクロール可能なコンテンツ -->
+    <div style="flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px 16px;">
+      <div class="edit-result" id="body-add-photo-result"></div>
+      <div class="form-section">
+        <div class="form-section-title">🏷 部位</div>
+        <select id="body-add-photo-part-select" class="body-compare-select"></select>
+      </div>
+      <input type="file" id="body-add-photo-file-input" accept="image/*"
+             style="display:none" onchange="bodyAddPhotoFileSelected(this)">
+      <div id="body-add-photo-preview-wrap" style="display:none;margin-bottom:12px">
+        <img id="body-add-photo-preview"
+             style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;border:2px solid var(--border);display:block">
+      </div>
+      <button onclick="document.getElementById('body-add-photo-file-input').click()"
+              style="width:100%;border:2px dashed var(--border);border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;background:#FAFAFA;color:var(--primary);display:flex;align-items:center;justify-content:center;gap:8px">
+        <span style="font-size:22px">📁</span> 写真を選択
+      </button>
+    </div>
+    <!-- 常時表示フッター（position:sticky 不使用、flex-shrink:0 で確実に表示） -->
+    <div style="flex-shrink:0; display:flex; gap:10px; padding:12px 16px; border-top:1px solid var(--border); background:#fff;">
+      <button class="btn-edit-cancel" onclick="bodyAddPhotoClose()" style="flex:1">キャンセル</button>
+      <button class="btn-edit-save" id="body-add-photo-save-btn" onclick="bodyAddPhotoSave()" style="flex:2">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 写真削除確認モーダル -->
+<div id="body-del-photo-modal"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:3000; align-items:center; justify-content:center; padding:20px;"
+     onclick="if(event.target===this)bodyDelPhotoClose()">
+  <div style="background:#fff; border-radius:16px; padding:24px; width:100%; max-width:360px; box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+    <div style="font-size:18px; font-weight:700; color:#1C1917; margin-bottom:8px;">🗑 写真を削除</div>
+    <div style="font-size:15px; line-height:1.7; color:#1C1917; margin-bottom:6px;">この写真を削除しますか？</div>
+    <div style="font-size:12px; color:#888; margin-bottom:20px;">体重・サイズなどのデータは削除されません。</div>
+    <div id="body-del-error-msg" style="font-size:13px; color:#B71C1C; margin-bottom:12px; min-height:0;"></div>
+    <div style="display:flex; gap:10px;">
+      <button id="body-del-cancel-btn" onclick="bodyDelPhotoClose()"
+              style="flex:1; padding:13px; border:1.5px solid #ddd; border-radius:12px; background:#fff; color:#1C1917; font-size:15px; font-weight:600; cursor:pointer;">キャンセル</button>
+      <button id="body-del-confirm-btn" onclick="bodyDelPhotoConfirm()"
+              style="flex:2; padding:13px; border:none; border-radius:12px; background:#B71C1C; color:#fff; font-size:15px; font-weight:700; cursor:pointer;">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 部位マスタ管理モーダル -->
+<div id="body-part-master-modal" class="edit-modal" style="display:none" onclick="bodyPartMasterModalBgClick(event)">
+  <div class="edit-modal-sheet">
+    <div class="edit-modal-header">
+      <span class="edit-modal-title">⚙ 部位を管理</span>
+      <button class="edit-modal-close" onclick="bodyPartMasterClose()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <div class="edit-result" id="body-part-master-result"></div>
+      <div id="body-part-master-list" style="margin-bottom:16px"></div>
+      <div class="form-section" style="margin-bottom:0">
+        <div class="form-section-title">＋ 新しい部位を追加</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="body-part-master-new-name" class="form-input"
+                 style="flex:1;font-size:14px" placeholder="例：背中上部">
+          <button class="btn-edit-save" id="body-part-master-add-btn"
+                  onclick="bodyPartMasterAdd()"
+                  style="flex-shrink:0;min-width:64px;padding:12px 0">追加</button>
+        </div>
+      </div>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-edit-cancel" onclick="bodyPartMasterClose()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 写真ライトボックス -->
+<div id="body-photo-lightbox"
+     onclick="if(event.target===this)bodyLightboxClose()"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:3000; flex-direction:column; align-items:center; justify-content:center;">
+  <button onclick="bodyLightboxClose()"
+          style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.18); border:none; border-radius:50%; width:48px; height:48px; color:#fff; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:3001; touch-action:manipulation;">✕</button>
+  <img id="body-photo-lightbox-img"
+       style="max-width:96vw; max-height:88vh; object-fit:contain; border-radius:8px;" src="">
+  <div style="margin-top:14px; font-size:13px; color:rgba(255,255,255,0.55); pointer-events:none;">タップして閉じる</div>
+</div>

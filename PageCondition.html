@@ -1,0 +1,536 @@
+<!-- 内部タブ -->
+<div id="cond-tabs" class="body-tabs" style="margin-bottom:12px">
+  <button class="body-tab active" onclick="showCondTab('record', this)">記録する</button>
+  <button class="body-tab" onclick="showCondTab('history', this)">履歴</button>
+</div>
+
+<!-- ===== 記録タブ ===== -->
+<div id="cond-pane-record" class="tr-pane active">
+
+  <!-- 保存結果メッセージ -->
+  <div class="save-result" id="condition-result"></div>
+
+  <!-- 日付 -->
+  <div class="form-section">
+    <div class="form-section-title">📅 日付</div>
+    <input type="date" id="cond-date" class="form-input" style="width:100%; font-size:18px;">
+  </div>
+
+  <!-- 基本情報 -->
+  <div class="form-section">
+    <div class="form-section-title">⚖️ 基本情報</div>
+    <div class="form-row">
+      <label class="form-label">体重</label>
+      <input type="number" id="cond-weight" class="form-input"
+             placeholder="70.0" step="0.1" min="0" max="300">
+      <span class="form-unit">kg</span>
+    </div>
+    <div class="form-row" style="margin-bottom:0">
+      <label class="form-label">睡眠時間</label>
+      <input type="number" id="cond-sleep-hours" class="form-input"
+             placeholder="7.0" step="0.5" min="0" max="24">
+      <span class="form-unit">時間</span>
+    </div>
+  </div>
+
+  <!-- 睡眠の質 -->
+  <div class="form-section">
+    <div class="form-section-title">😴 睡眠の質</div>
+    <div class="rating-group" id="rating-sleep-quality">
+      <button class="rating-btn" onclick="selectRating('rating-sleep-quality','sleepQuality',1,this)">1<br><small>悪い</small></button>
+      <button class="rating-btn" onclick="selectRating('rating-sleep-quality','sleepQuality',2,this)">2</button>
+      <button class="rating-btn" onclick="selectRating('rating-sleep-quality','sleepQuality',3,this)">3<br><small>普通</small></button>
+      <button class="rating-btn" onclick="selectRating('rating-sleep-quality','sleepQuality',4,this)">4</button>
+      <button class="rating-btn" onclick="selectRating('rating-sleep-quality','sleepQuality',5,this)">5<br><small>良い</small></button>
+    </div>
+  </div>
+
+  <!-- 疲労度 -->
+  <div class="form-section">
+    <div class="form-section-title">😓 疲労度</div>
+    <div class="slider-container">
+      <div class="slider-value" id="fatigue-value">5</div>
+      <input type="range" id="cond-fatigue" min="1" max="10" value="5"
+             oninput="document.getElementById('fatigue-value').textContent = this.value">
+      <div class="slider-labels">
+        <span>1 ほぼなし</span>
+        <span>10 極度の疲労</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 体調・気分 -->
+  <div class="form-section">
+    <div class="form-section-title">🌤️ 体調・気分</div>
+    <div class="form-label" style="margin-bottom:8px">体調</div>
+    <div class="choice-group" id="choice-condition">
+      <button class="choice-btn" onclick="selectChoice('choice-condition','condition','良い',this)">😊 良い</button>
+      <button class="choice-btn" onclick="selectChoice('choice-condition','condition','普通',this)">😐 普通</button>
+      <button class="choice-btn" onclick="selectChoice('choice-condition','condition','悪い',this)">😞 悪い</button>
+    </div>
+    <div class="form-label" style="margin-top:16px; margin-bottom:8px">気分</div>
+    <div class="choice-group" id="choice-mood">
+      <button class="choice-btn" onclick="selectChoice('choice-mood','mood','良い',this)">😊 良い</button>
+      <button class="choice-btn" onclick="selectChoice('choice-mood','mood','普通',this)">😐 普通</button>
+      <button class="choice-btn" onclick="selectChoice('choice-mood','mood','悪い',this)">😞 悪い</button>
+    </div>
+  </div>
+
+  <!-- 筋肉痛 -->
+  <div class="form-section">
+    <div class="form-section-title">🦵 筋肉痛</div>
+    <div class="form-row">
+      <label class="form-label">部位</label>
+      <input type="text" id="cond-soreness" class="form-input"
+             placeholder="例：大腿四頭筋、胸">
+    </div>
+    <div class="form-label" style="margin-bottom:8px">程度</div>
+    <div class="rating-group" id="rating-soreness-level">
+      <button class="rating-btn" onclick="selectRating('rating-soreness-level','sorenessLevel',1,this)">1<br><small>なし</small></button>
+      <button class="rating-btn" onclick="selectRating('rating-soreness-level','sorenessLevel',2,this)">2</button>
+      <button class="rating-btn" onclick="selectRating('rating-soreness-level','sorenessLevel',3,this)">3<br><small>中</small></button>
+      <button class="rating-btn" onclick="selectRating('rating-soreness-level','sorenessLevel',4,this)">4</button>
+      <button class="rating-btn" onclick="selectRating('rating-soreness-level','sorenessLevel',5,this)">5<br><small>強い</small></button>
+    </div>
+  </div>
+
+  <!-- 痛み・違和感 -->
+  <div class="form-section">
+    <div class="form-section-title">⚠️ 痛み・違和感</div>
+    <div class="form-row">
+      <label class="form-label">場所</label>
+      <input type="text" id="cond-pain" class="form-input"
+             placeholder="例：右肩、腰">
+    </div>
+    <div class="form-label" style="margin-bottom:8px">程度</div>
+    <div class="rating-group" id="rating-pain-level">
+      <button class="rating-btn" onclick="selectRating('rating-pain-level','painLevel',1,this)">1<br><small>なし</small></button>
+      <button class="rating-btn" onclick="selectRating('rating-pain-level','painLevel',2,this)">2</button>
+      <button class="rating-btn" onclick="selectRating('rating-pain-level','painLevel',3,this)">3<br><small>中</small></button>
+      <button class="rating-btn" onclick="selectRating('rating-pain-level','painLevel',4,this)">4</button>
+      <button class="rating-btn" onclick="selectRating('rating-pain-level','painLevel',5,this)">5<br><small>強い</small></button>
+    </div>
+  </div>
+
+  <!-- 自由メモ -->
+  <div class="form-section">
+    <div class="form-section-title">📝 自由メモ</div>
+    <textarea id="cond-memo" class="form-textarea"
+              placeholder="気になることや特記事項があれば入力してください"></textarea>
+  </div>
+
+  <!-- 保存ボタン -->
+  <button class="btn btn-primary" id="condition-save-btn" onclick="saveCondition()">
+    💾 保存する
+  </button>
+  <div style="height:24px"></div>
+
+</div><!-- /cond-pane-record -->
+
+<!-- ===== 履歴タブ ===== -->
+<div id="cond-pane-history" class="tr-pane">
+  <div id="cond-hist-list">
+    <div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>
+  </div>
+  <div style="height:24px"></div>
+</div>
+
+<script>
+var condSel = {
+  sleepQuality: null, condition: null, mood: null,
+  sorenessLevel: null, painLevel: null
+};
+var condHistLoaded  = false;
+var condHistRecords = [];
+
+(function() {
+  var t = new Date();
+  document.getElementById('cond-date').value =
+    t.getFullYear() + '-' +
+    String(t.getMonth() + 1).padStart(2, '0') + '-' +
+    String(t.getDate()).padStart(2, '0');
+})();
+
+function showCondTab(name, btn) {
+  document.querySelectorAll('#cond-tabs .body-tab').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('#cond-pane-record, #cond-pane-history').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('cond-pane-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'history') condLoadHistory();
+}
+
+function selectRating(groupId, key, value, btn) {
+  document.querySelectorAll('#' + groupId + ' .rating-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  condSel[key] = value;
+}
+
+function selectChoice(groupId, key, value, btn) {
+  document.querySelectorAll('#' + groupId + ' .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  condSel[key] = value;
+}
+
+function saveCondition() {
+  var btn = document.getElementById('condition-save-btn');
+  var data = {
+    date:          document.getElementById('cond-date').value,
+    weight:        document.getElementById('cond-weight').value,
+    sleepHours:    document.getElementById('cond-sleep-hours').value,
+    sleepQuality:  condSel.sleepQuality,
+    fatigue:       document.getElementById('cond-fatigue').value,
+    condition:     condSel.condition,
+    mood:          condSel.mood,
+    soreness:      document.getElementById('cond-soreness').value,
+    sorenessLevel: condSel.sorenessLevel,
+    painLocation:  document.getElementById('cond-pain').value,
+    painLevel:     condSel.painLevel,
+    memo:          document.getElementById('cond-memo').value
+  };
+  if (!data.date) { showCondResult('error', '日付を入力してください'); return; }
+  btn.textContent = '保存中…';
+  btn.disabled = true;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      if (res.success) {
+        showCondResult('success', '体調記録を保存しました！');
+        condHistLoaded = false;
+      } else {
+        showCondResult('error', 'エラー: ' + res.error);
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.textContent = '💾 保存する';
+      btn.disabled = false;
+      showCondResult('error', '保存に失敗しました: ' + err.message);
+    })
+    .saveConditionData(data);
+}
+
+function showCondResult(type, message) {
+  var el = document.getElementById('condition-result');
+  el.className = 'save-result ' + type;
+  el.textContent = message;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ===== 体調履歴 =====
+function condLoadHistory() {
+  if (condHistLoaded) { condRenderHistory(condHistRecords); return; }
+  document.getElementById('cond-hist-list').innerHTML =
+    '<div style="text-align:center;padding:48px 16px;color:var(--text-sub)">読み込み中…</div>';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      condHistLoaded = true;
+      if (res && res.success) condHistRecords = res.records;
+      condRenderHistory(condHistRecords);
+    })
+    .withFailureHandler(function() {
+      document.getElementById('cond-hist-list').innerHTML =
+        '<div style="text-align:center;padding:32px;color:#C62828">読み込みに失敗しました</div>';
+    })
+    .getConditionHistory();
+}
+
+function condRenderHistory(records) {
+  var list = document.getElementById('cond-hist-list');
+  if (!records || records.length === 0) {
+    list.innerHTML = '<div class="placeholder-card" style="margin-top:0"><div class="icon">😴</div><div class="title">記録がありません</div><div class="desc">「記録する」タブから<br>体調を記録しましょう</div></div>';
+    return;
+  }
+  var html = '';
+  records.forEach(function(r, si) {
+    var dateLabel = r.date.replace(/-/g, '/');
+    var summary = [];
+    if (r.condition) summary.push('体調:' + r.condition);
+    if (r.fatigue)   summary.push('疲労:' + r.fatigue);
+    if (r.weight)    summary.push(r.weight + 'kg');
+
+    html += '<div class="tr-hist-card">';
+    html += '<div class="tr-hist-header" onclick="condHistToggle(' + si + ')">';
+    html += '<div style="min-width:0;flex:1">';
+    html += '<div class="tr-hist-date">' + dateLabel + '</div>';
+    html += '<div class="tr-hist-summary">' + condEsc(summary.join(' · ')) + '</div>';
+    html += '</div>';
+    html += '<button class="edit-hist-btn" onclick="event.stopPropagation();condEditOpen(' + si + ')">編集</button>';
+    html += '<span class="tr-hist-arrow" id="cond-hist-arrow-' + si + '" style="margin-left:8px">▶</span>';
+    html += '</div>';
+
+    html += '<div id="cond-hist-detail-' + si + '" class="tr-hist-detail">';
+    var fields = [];
+    if (r.weight)       fields.push(['体重', r.weight + 'kg']);
+    if (r.sleepHours)   fields.push(['睡眠', r.sleepHours + '時間']);
+    if (r.sleepQuality) fields.push(['睡眠の質', r.sleepQuality + '/5']);
+    if (r.fatigue)      fields.push(['疲労度', r.fatigue + '/10']);
+    if (r.condition)    fields.push(['体調', r.condition]);
+    if (r.mood)         fields.push(['気分', r.mood]);
+    if (fields.length > 0) {
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0">';
+      fields.forEach(function(f) {
+        html += '<div style="background:#F5F7FA;border-radius:8px;padding:8px 12px">';
+        html += '<div style="font-size:11px;color:var(--text-sub);margin-bottom:2px">' + f[0] + '</div>';
+        html += '<div style="font-size:15px;font-weight:700">' + condEsc(f[1]) + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    if (r.soreness || r.sorenessLevel) {
+      html += '<div style="font-size:13px;margin-top:6px"><span style="color:var(--text-sub)">筋肉痛: </span>' + condEsc(r.soreness);
+      if (r.sorenessLevel) html += ' 程度' + r.sorenessLevel + '/5';
+      html += '</div>';
+    }
+    if (r.painLocation || r.painLevel) {
+      html += '<div style="font-size:13px;margin-top:4px"><span style="color:var(--text-sub)">痛み: </span>' + condEsc(r.painLocation);
+      if (r.painLevel) html += ' 程度' + r.painLevel + '/5';
+      html += '</div>';
+    }
+    if (r.memo) html += '<div style="font-size:12px;color:var(--text-sub);margin-top:8px">' + condEsc(r.memo) + '</div>';
+    html += '</div></div>';
+  });
+  list.innerHTML = html;
+}
+
+function condHistToggle(si) {
+  var d = document.getElementById('cond-hist-detail-' + si);
+  var a = document.getElementById('cond-hist-arrow-' + si);
+  var open = d.style.display === 'block';
+  d.style.display = open ? 'none' : 'block';
+  a.textContent   = open ? '▶' : '▼';
+}
+
+function condEsc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== 体調履歴 編集 =====
+var _condEditIdx = -1;
+var _condEditSel = { sleepQuality: null, condition: null, mood: null, sorenessLevel: null, painLevel: null };
+
+function condEditOpen(si) {
+  var r = condHistRecords[si];
+  if (!r) return;
+  _condEditIdx = si;
+  _condEditSel = { sleepQuality: null, condition: null, mood: null, sorenessLevel: null, painLevel: null };
+
+  document.getElementById('coe-date').value        = r.date        || '';
+  document.getElementById('coe-weight').value      = r.weight      || '';
+  document.getElementById('coe-sleep-hours').value = r.sleepHours  || '';
+  document.getElementById('coe-fatigue').value     = r.fatigue     || '5';
+  document.getElementById('coe-fatigue-val').textContent = r.fatigue || '5';
+  document.getElementById('coe-soreness').value    = r.soreness    || '';
+  document.getElementById('coe-pain').value        = r.painLocation || '';
+  document.getElementById('coe-memo').value        = r.memo        || '';
+
+  // ボタン復元
+  ['coe-rating-sq','coe-rating-sl','coe-rating-pl'].forEach(function(gId) {
+    document.querySelectorAll('#' + gId + ' .rating-btn').forEach(function(b) { b.classList.remove('selected'); });
+  });
+  ['coe-choice-cond','coe-choice-mood'].forEach(function(gId) {
+    document.querySelectorAll('#' + gId + ' .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+  });
+
+  if (r.sleepQuality) {
+    _condEditSel.sleepQuality = parseInt(r.sleepQuality);
+    document.querySelectorAll('#coe-rating-sq .rating-btn').forEach(function(b) {
+      if (parseInt(b.dataset.val) === _condEditSel.sleepQuality) b.classList.add('selected');
+    });
+  }
+  if (r.sorenessLevel) {
+    _condEditSel.sorenessLevel = parseInt(r.sorenessLevel);
+    document.querySelectorAll('#coe-rating-sl .rating-btn').forEach(function(b) {
+      if (parseInt(b.dataset.val) === _condEditSel.sorenessLevel) b.classList.add('selected');
+    });
+  }
+  if (r.painLevel) {
+    _condEditSel.painLevel = parseInt(r.painLevel);
+    document.querySelectorAll('#coe-rating-pl .rating-btn').forEach(function(b) {
+      if (parseInt(b.dataset.val) === _condEditSel.painLevel) b.classList.add('selected');
+    });
+  }
+  if (r.condition) {
+    _condEditSel.condition = r.condition;
+    document.querySelectorAll('#coe-choice-cond .choice-btn').forEach(function(b) {
+      if (b.dataset.val === r.condition) b.classList.add('selected');
+    });
+  }
+  if (r.mood) {
+    _condEditSel.mood = r.mood;
+    document.querySelectorAll('#coe-choice-mood .choice-btn').forEach(function(b) {
+      if (b.dataset.val === r.mood) b.classList.add('selected');
+    });
+  }
+
+  var res = document.getElementById('coe-result');
+  res.className = 'edit-result'; res.textContent = '';
+  document.getElementById('cond-edit-modal').style.display = 'flex';
+}
+
+function condEditClose() {
+  document.getElementById('cond-edit-modal').style.display = 'none';
+  _condEditIdx = -1;
+}
+
+function condEditBgClick(e) {
+  if (e.target === document.getElementById('cond-edit-modal')) condEditClose();
+}
+
+function coeRating(groupId, key, val, btn) {
+  document.querySelectorAll('#' + groupId + ' .rating-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  _condEditSel[key] = val;
+}
+
+function coeChoice(groupId, key, val, btn) {
+  document.querySelectorAll('#' + groupId + ' .choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  _condEditSel[key] = val;
+}
+
+function condEditSave() {
+  var r = condHistRecords[_condEditIdx];
+  if (!r || !r.id) { _coeShowResult('error', 'IDが見つかりません'); return; }
+  var date = document.getElementById('coe-date').value;
+  if (!date) { _coeShowResult('error', '日付を入力してください'); return; }
+  var data = {
+    id:            r.id,
+    date:          date,
+    weight:        document.getElementById('coe-weight').value,
+    sleepHours:    document.getElementById('coe-sleep-hours').value,
+    sleepQuality:  _condEditSel.sleepQuality !== null ? String(_condEditSel.sleepQuality) : '',
+    fatigue:       document.getElementById('coe-fatigue').value,
+    soreness:      document.getElementById('coe-soreness').value,
+    sorenessLevel: _condEditSel.sorenessLevel !== null ? String(_condEditSel.sorenessLevel) : '',
+    condition:     _condEditSel.condition  || '',
+    mood:          _condEditSel.mood       || '',
+    painLocation:  document.getElementById('coe-pain').value,
+    painLevel:     _condEditSel.painLevel !== null ? String(_condEditSel.painLevel) : '',
+    memo:          document.getElementById('coe-memo').value
+  };
+  var btn = document.getElementById('coe-save-btn');
+  btn.textContent = '保存中…'; btn.disabled = true;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = '変更を保存'; btn.disabled = false;
+      if (res && res.success) {
+        condHistLoaded = false;
+        if (typeof _aiCondRecs !== 'undefined') { _aiCondRecs = null; _aiMealRecs3 = null; _aiMasterMap = null; }
+        condEditClose();
+        condLoadHistory();
+        if (typeof homeRefresh === 'function') homeRefresh();
+        if (typeof showToast === 'function') showToast('✓ 変更しました', 'success');
+      } else {
+        console.error('updateConditionRecord error:', res ? res.error : '不明');
+        _coeShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.textContent = '変更を保存'; btn.disabled = false;
+      console.error('updateConditionRecord failure:', err);
+      _coeShowResult('error', '変更を保存できませんでした。もう一度お試しください。');
+    })
+    .updateConditionRecord(data);
+}
+
+function _coeShowResult(type, msg) {
+  var el = document.getElementById('coe-result');
+  el.className = 'edit-result ' + type;
+  el.textContent = msg;
+}
+</script>
+
+<!-- 体調 編集モーダル -->
+<div id="cond-edit-modal" class="edit-modal" style="display:none" onclick="condEditBgClick(event)">
+  <div class="edit-modal-sheet">
+    <div class="edit-modal-header">
+      <span class="edit-modal-title">体調記録を編集</span>
+      <button class="edit-modal-close" onclick="condEditClose()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <div class="edit-result" id="coe-result"></div>
+      <button class="btn-edit-save-top" onclick="condEditSave()">変更を保存</button>
+      <div class="form-section">
+        <div class="form-section-title">📅 日付</div>
+        <input type="date" id="coe-date" class="form-input" style="width:100%;font-size:16px">
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">⚖️ 基本情報</div>
+        <div class="form-row"><label class="form-label">体重</label>
+          <input type="number" id="coe-weight" class="form-input" placeholder="70.0" step="0.1" min="0">
+          <span class="form-unit">kg</span></div>
+        <div class="form-row" style="margin-bottom:0"><label class="form-label">睡眠時間</label>
+          <input type="number" id="coe-sleep-hours" class="form-input" placeholder="7.0" step="0.5" min="0">
+          <span class="form-unit">時間</span></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">😴 睡眠の質</div>
+        <div class="rating-group" id="coe-rating-sq">
+          <button class="rating-btn" data-val="1" onclick="coeRating('coe-rating-sq','sleepQuality',1,this)">1<br><small>悪い</small></button>
+          <button class="rating-btn" data-val="2" onclick="coeRating('coe-rating-sq','sleepQuality',2,this)">2</button>
+          <button class="rating-btn" data-val="3" onclick="coeRating('coe-rating-sq','sleepQuality',3,this)">3<br><small>普通</small></button>
+          <button class="rating-btn" data-val="4" onclick="coeRating('coe-rating-sq','sleepQuality',4,this)">4</button>
+          <button class="rating-btn" data-val="5" onclick="coeRating('coe-rating-sq','sleepQuality',5,this)">5<br><small>良い</small></button>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">😓 疲労度</div>
+        <div class="slider-container">
+          <div class="slider-value" id="coe-fatigue-val">5</div>
+          <input type="range" id="coe-fatigue" min="1" max="10" value="5"
+                 oninput="document.getElementById('coe-fatigue-val').textContent=this.value">
+          <div class="slider-labels"><span>1 ほぼなし</span><span>10 極度の疲労</span></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">🌤️ 体調・気分</div>
+        <div class="form-label" style="margin-bottom:8px">体調</div>
+        <div class="choice-group" id="coe-choice-cond">
+          <button class="choice-btn" data-val="良い"  onclick="coeChoice('coe-choice-cond','condition','良い',this)">😊 良い</button>
+          <button class="choice-btn" data-val="普通"  onclick="coeChoice('coe-choice-cond','condition','普通',this)">😐 普通</button>
+          <button class="choice-btn" data-val="悪い"  onclick="coeChoice('coe-choice-cond','condition','悪い',this)">😞 悪い</button>
+        </div>
+        <div class="form-label" style="margin-top:16px;margin-bottom:8px">気分</div>
+        <div class="choice-group" id="coe-choice-mood">
+          <button class="choice-btn" data-val="良い"  onclick="coeChoice('coe-choice-mood','mood','良い',this)">😊 良い</button>
+          <button class="choice-btn" data-val="普通"  onclick="coeChoice('coe-choice-mood','mood','普通',this)">😐 普通</button>
+          <button class="choice-btn" data-val="悪い"  onclick="coeChoice('coe-choice-mood','mood','悪い',this)">😞 悪い</button>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">🦵 筋肉痛</div>
+        <div class="form-row"><label class="form-label">部位</label>
+          <input type="text" id="coe-soreness" class="form-input" placeholder="例：大腿四頭筋"></div>
+        <div class="form-label" style="margin-bottom:8px">程度</div>
+        <div class="rating-group" id="coe-rating-sl">
+          <button class="rating-btn" data-val="1" onclick="coeRating('coe-rating-sl','sorenessLevel',1,this)">1<br><small>なし</small></button>
+          <button class="rating-btn" data-val="2" onclick="coeRating('coe-rating-sl','sorenessLevel',2,this)">2</button>
+          <button class="rating-btn" data-val="3" onclick="coeRating('coe-rating-sl','sorenessLevel',3,this)">3<br><small>中</small></button>
+          <button class="rating-btn" data-val="4" onclick="coeRating('coe-rating-sl','sorenessLevel',4,this)">4</button>
+          <button class="rating-btn" data-val="5" onclick="coeRating('coe-rating-sl','sorenessLevel',5,this)">5<br><small>強い</small></button>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">⚠️ 痛み・違和感</div>
+        <div class="form-row"><label class="form-label">場所</label>
+          <input type="text" id="coe-pain" class="form-input" placeholder="例：右肩、腰"></div>
+        <div class="form-label" style="margin-bottom:8px">程度</div>
+        <div class="rating-group" id="coe-rating-pl">
+          <button class="rating-btn" data-val="1" onclick="coeRating('coe-rating-pl','painLevel',1,this)">1<br><small>なし</small></button>
+          <button class="rating-btn" data-val="2" onclick="coeRating('coe-rating-pl','painLevel',2,this)">2</button>
+          <button class="rating-btn" data-val="3" onclick="coeRating('coe-rating-pl','painLevel',3,this)">3<br><small>中</small></button>
+          <button class="rating-btn" data-val="4" onclick="coeRating('coe-rating-pl','painLevel',4,this)">4</button>
+          <button class="rating-btn" data-val="5" onclick="coeRating('coe-rating-pl','painLevel',5,this)">5<br><small>強い</small></button>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">📝 自由メモ</div>
+        <textarea id="coe-memo" class="form-textarea" placeholder="気になることなど"></textarea>
+      </div>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-edit-cancel" onclick="condEditClose()">キャンセル</button>
+      <button class="btn-edit-save" id="coe-save-btn" onclick="condEditSave()">変更を保存</button>
+    </div>
+  </div>
+</div>

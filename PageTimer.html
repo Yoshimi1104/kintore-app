@@ -1,0 +1,143 @@
+<!-- マスコットミニアイコン -->
+<div class="timer-mascot-area">
+  <div class="timer-mascot-mini">
+    <img src=""
+         alt="マスコット"
+         onerror="this.style.display='none';this.parentElement.textContent='💪'">
+  </div>
+</div>
+
+<!-- プリセット選択 -->
+<div class="timer-presets">
+  <button class="timer-preset active" onclick="timerSetPreset(30, this)">30秒</button>
+  <button class="timer-preset"        onclick="timerSetPreset(60, this)">1分</button>
+  <button class="timer-preset"        onclick="timerSetPreset(90, this)">1分半</button>
+  <button class="timer-preset"        onclick="timerSetPreset(120, this)">2分</button>
+  <button class="timer-preset"        onclick="timerSetPreset(180, this)">3分</button>
+</div>
+
+<!-- 円形タイマー -->
+<div class="timer-ring-wrap">
+  <svg class="timer-ring" viewBox="0 0 240 240">
+    <circle class="timer-ring-bg"       cx="120" cy="120" r="100"/>
+    <circle class="timer-ring-progress" cx="120" cy="120" r="100"
+            id="timer-ring-progress"
+            stroke-dasharray="628.3"
+            stroke-dashoffset="0"/>
+  </svg>
+  <div class="timer-display" id="timer-display">0:30</div>
+</div>
+
+<!-- 操作ボタン -->
+<div class="timer-btns">
+  <button class="timer-btn-start" id="timer-start-btn" onclick="timerToggle()">▶ スタート</button>
+  <button class="timer-btn-reset" onclick="timerReset()">↺ リセット</button>
+</div>
+<div style="height:24px"></div>
+
+<script>
+var TIMER_TOTAL    = 30;
+var timerRemaining = 30;
+var timerInterval  = null;
+var timerRunning   = false;
+var CIRCUMFERENCE  = 628.3;
+var timerAudioCtx  = null;
+
+function timerSetPreset(seconds, btn) {
+  if (timerRunning) return;
+  TIMER_TOTAL    = seconds;
+  timerRemaining = seconds;
+  document.querySelectorAll('.timer-preset').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  timerUpdateDisplay();
+  timerUpdateRing();
+}
+
+function timerToggle() {
+  if (timerRunning) {
+    timerPause();
+  } else {
+    if (timerRemaining <= 0) timerRemaining = TIMER_TOTAL;
+    timerStart();
+  }
+}
+
+function timerStart() {
+  // ユーザー操作のタイミングでAudioContextを初期化（モバイル自動再生制限の回避）
+  if (!timerAudioCtx) {
+    try { timerAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  if (timerAudioCtx && timerAudioCtx.state === 'suspended') timerAudioCtx.resume();
+  timerRunning = true;
+  document.getElementById('timer-start-btn').textContent = '⏸ 一時停止';
+  document.querySelectorAll('.timer-preset').forEach(function(b) { b.style.opacity = '0.4'; });
+  timerInterval = setInterval(timerTick, 1000);
+}
+
+function timerPause() {
+  timerRunning = false;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  document.getElementById('timer-start-btn').textContent = '▶ スタート';
+  document.querySelectorAll('.timer-preset').forEach(function(b) { b.style.opacity = '1'; });
+}
+
+function timerReset() {
+  timerPause();
+  timerRemaining = TIMER_TOTAL;
+  timerUpdateDisplay();
+  timerUpdateRing();
+}
+
+function timerTick() {
+  timerRemaining--;
+  timerUpdateDisplay();
+  timerUpdateRing();
+  if (timerRemaining <= 0) timerFinish();
+}
+
+function timerFinish() {
+  timerPause();
+  document.getElementById('timer-ring-progress').style.stroke = '#4CAF50';
+  document.getElementById('timer-display').style.color        = '#4CAF50';
+  document.getElementById('timer-display').textContent        = '完了！';
+  timerBeep();
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+}
+
+function timerUpdateDisplay() {
+  var m = Math.floor(timerRemaining / 60);
+  var s = timerRemaining % 60;
+  document.getElementById('timer-display').textContent = m + ':' + String(s).padStart(2, '0');
+  var color = timerRemaining <= 5  ? '#E74C3C' :
+              timerRemaining <= 10 ? '#E67E22' : '#D4547A';
+  document.getElementById('timer-display').style.color        = color;
+  document.getElementById('timer-ring-progress').style.stroke = color;
+}
+
+function timerUpdateRing() {
+  var progress = (TIMER_TOTAL - timerRemaining) / TIMER_TOTAL;
+  document.getElementById('timer-ring-progress').style.strokeDashoffset = CIRCUMFERENCE * progress;
+}
+
+function timerBeep() {
+  try {
+    // スタート時に作成済みのContextを再利用（モバイルで確実に鳴らすため）
+    var ctx = timerAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    [0, 300, 600].forEach(function(ms) {
+      var osc  = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      var t = ctx.currentTime + ms / 1000;
+      gain.gain.setValueAtTime(0.5, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      osc.start(t);
+      osc.stop(t + 0.3);
+    });
+  } catch(e) {}
+}
+</script>
