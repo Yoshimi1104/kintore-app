@@ -110,7 +110,7 @@ function timerUpdateDisplay() {
   var s = timerRemaining % 60;
   document.getElementById('timer-display').textContent = m + ':' + String(s).padStart(2, '0');
   var color = timerRemaining <= 5  ? '#E74C3C' :
-              timerRemaining <= 10 ? '#E67E22' : '#D4547A';
+              timerRemaining <= 10 ? '#E67E22' : '#E12632';
   document.getElementById('timer-display').style.color        = color;
   document.getElementById('timer-ring-progress').style.stroke = color;
 }

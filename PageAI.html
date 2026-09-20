@@ -302,7 +302,7 @@ function aiRenderBody() {
   var labels = points.map(function(p) { return _aiDateLabel(p.date); });
   var values = points.map(function(p) { return p.val; });
   _aiDrawChart('body', document.getElementById('ai-body-chart'), labels, values,
-    metaDef.label + '(' + metaDef.unit + ')', '#D4547A');
+    metaDef.label + '(' + metaDef.unit + ')', '#E12632');
 
   if (points.length === 1) {
     statsEl.innerHTML =
@@ -386,7 +386,7 @@ function aiRenderTrChart() {
 
   // 指標の定義
   var metricDefs = {
-    weight: { key: 'maxWeight',    label: '最大重量',    unit: 'kg', color: '#D4547A' },
+    weight: { key: 'maxWeight',    label: '最大重量',    unit: 'kg', color: '#E12632' },
     reps:   { key: 'maxReps',      label: '最大回数',    unit: '回', color: '#C2785A' },
     volume: { key: 'totalVolume',  label: '総ボリューム', unit: 'kg', color: '#7B68EE' },
     rpe:    { key: 'avgRpe',       label: 'RPE',         unit: '',   color: '#5B9BD5' }
@@ -739,7 +739,7 @@ function _s3CatBars(groups) {
   groups.forEach(function(g) {
     var w   = Math.abs(g.mean / maxAbs * 100).toFixed(1);
     var cls = g.mean > 0.5 ? 'pos' : (g.mean < -0.5 ? 'neg' : 'zero');
-    var col = g.mean > 0.5 ? '#7B68EE' : (g.mean < -0.5 ? '#D4547A' : '#AAAAAA');
+    var col = g.mean > 0.5 ? '#7B68EE' : (g.mean < -0.5 ? '#E12632' : '#AAAAAA');
     var sign = g.mean >= 0 ? '+' : '';
     html += '<div class="s3-cat-row">' +
       '<span class="s3-cat-lbl">' + aiEsc(g.label) + '</span>' +
@@ -897,7 +897,7 @@ function aiRenderBodyPart() {
   wrapEl.style.height = chartH + 'px';
   _aiDestroyChart('bp');
   if (window.Chart) {
-    var COLORS = ['#D4547A','#7B68EE','#C2785A','#5B9BD5','#5BA45B','#E6984C','#9B59B6','#1ABC9C'];
+    var COLORS = ['#E12632','#7B68EE','#C2785A','#5B9BD5','#5BA45B','#E6984C','#9B59B6','#1ABC9C'];
     var mLabel = { volume: 'ボリューム (kg)', sets: 'セット数', reps: '総回数' }[_aiBpMetric];
     _aiBpChart = new Chart(document.getElementById('ai-bp-chart').getContext('2d'), {
       type: 'bar',
